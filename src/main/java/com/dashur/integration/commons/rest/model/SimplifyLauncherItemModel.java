@@ -2,6 +2,7 @@ package com.dashur.integration.commons.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class SimplifyLauncherItemModel {
   private String token;
 
   @JsonProperty("ext_ref")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private String extRef;
 
   @JsonProperty("app_id")

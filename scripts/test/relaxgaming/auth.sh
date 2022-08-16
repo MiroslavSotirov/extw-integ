@@ -12,7 +12,7 @@ GAME_ID=8243
 UUID=$(uuid)
 TIME=$(date -u +'%Y-%m-%d %H:%M:%S.%3N')
 TOKEN="testticket-em1" # $(sh fetchtoken.sh)
-OPR_META='{ "opr_meta": { "gameRef": "rlx.em.em.'$GAMEID'", "clientId": "dev_test", "req_ip_addr": "127.0.0.1" }}'
+OPR_META='{ "opr_meta": { "gameRef": "rlx.em.em.'$GAME_ID'", "clientId": "dev_test", "req_ip_addr": "127.0.0.1" }}'
 REQ='{"req_id":"'$UUID'","timestamp":"'$TIME'","token":"'$TOKEN'","ctx":'$OPR_META'}'
 HMAC=$(echo -n "$REQ" | openssl dgst -hmac "$HMAC_KEY" -binary | base64)
 

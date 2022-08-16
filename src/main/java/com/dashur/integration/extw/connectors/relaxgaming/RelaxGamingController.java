@@ -801,10 +801,10 @@ public class RelaxGamingController {
     RestResponseWrapperModel<String> result;
     try {
       SimplifyLauncherItemModel rq = new SimplifyLauncherItemModel();
-      rq.setToken(token);
+      rq.setDemo(isDemo);
+      if(!isDemo) rq.setToken(token);
       rq.setAppId(setting.getLauncherItemApplicationId());
       rq.setItemId(Long.parseLong(gameId));
-      rq.setDemo(isDemo);
       rq.setExternal(Boolean.TRUE);
 
       Map<String, Object> confParams = Maps.newHashMap();
