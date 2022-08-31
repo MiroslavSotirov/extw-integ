@@ -183,11 +183,21 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
   }
 
+  static int counter = 0;
   public TransactionResponse transaction(javax.ws.rs.core.Response res) {
-    if (Utils.isSuccess(res.getStatus())){
+    int status = res.getStatus();
+    // test error handling
+    if (Utils.isSuccess(status) && (counter++ & 1) == 1) {
+      int[] errorcodes = {500, 400};
+      status = errorcodes[(counter/2)%2];
+      log.warn("transaction {}, force client service response status code {}", counter, status);
+    }
+    if (Utils.isSuccess(status)){
       return res.readEntity(TransactionResponse.class);
     }
-    throw Utils.toException(res.getStatus());
+    BaseException e = Utils.toException(status);
+    log.error("clientservice transaction failed", e);
+    throw e;
   }
 
   @Override
@@ -354,7 +364,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setGameRef(gameRef);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
-          // operatorReq.setOriginalTxId(String.valueOf(txRequest.getTxId()));  // same as txId?
+          operatorReq.setOriginalTxId(String.valueOf(txRequest.getRefundTxId()));
           operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
           // operatorReq.setEnded(Boolean.FALSE); // only with Paddy Power Betfair
           operatorReq.setTimestamp(); // new date().getTime());
