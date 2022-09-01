@@ -72,6 +72,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasAuthResponse auth(Long companyId, DasAuthRequest request) {
     try {
+      log.info("RelaxGamingConnectorServiceImpl.auth [{}] [[}]", companyId, request);
       RelaxGamingConfiguration.CompanySetting setting =
           relaxConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
@@ -88,6 +89,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasBalanceResponse balance(Long companyId, DasBalanceRequest request) {
     try {
+      log.info("RelaxGamingConnectorServiceImpl.balance [{}] [[}]", companyId, request);
       RelaxGamingConfiguration.CompanySetting setting =
           relaxConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
@@ -103,6 +105,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   @Override
   public DasTransactionResponse transaction(Long companyId, DasTransactionRequest request) {
+    log.info("RelaxGamingConnectorServiceImpl.transaction [{}] [[}]", companyId, request);
     int millis = 200; // TODO: No hardcoded values - should request after 200 400 800 1600 3200 ms
     DasTransactionResponse result = null;
     WebApplicationException error = null;
@@ -170,6 +173,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasEndRoundResponse endRound(Long companyId, DasEndRoundRequest request) {    
     try {
+      log.info("RelaxGamingConnectorServiceImpl.endRound [{}] [[}]", companyId, request);
       RelaxGamingConfiguration.CompanySetting setting =
           relaxConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();

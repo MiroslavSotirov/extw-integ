@@ -104,7 +104,10 @@ public class ExtwConnectorsController {
       }
     } catch (Exception e) {
       log.error("ExtwConnectorsController.api [{} - {} - {}]", operator, companyId, api, e);
-      return error(e, start, request);
+//      return error(e, start, request);
+      Response resp = error(e, start, request);
+      log.info("Response [{}]", resp);
+      return resp;
     }
 
     if (Objects.nonNull(response)) {
