@@ -6,6 +6,7 @@ import com.dashur.integration.commons.exception.BaseException;
 import com.dashur.integration.commons.exception.EntityNotExistException;
 import com.dashur.integration.commons.exception.PaymentException;
 import com.dashur.integration.commons.exception.ValidationException;
+import com.dashur.integration.commons.exception.DuplicateException;
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
@@ -557,7 +558,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         return new ApplicationException(toMessage(status));
       }
       // 5xx, unknown error, retry or rollback
-      return new PaymentException(toMessage(status));
+      return new DuplicateException(toMessage(status));
+//      return new PaymentException(toMessage(status));
     }
 
     /**
