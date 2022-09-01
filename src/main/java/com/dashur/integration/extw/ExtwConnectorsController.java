@@ -106,7 +106,7 @@ public class ExtwConnectorsController {
       log.error("ExtwConnectorsController.api [{} - {} - {}]", operator, companyId, api, e);
 //      return error(e, start, request);
       Response resp = error(e, start, request);
-      log.info("Response [{}]", resp);
+      log.info("Response [{}]", resp.readEntity(String.class));
       return resp;
     }
 
