@@ -154,6 +154,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         TransactionResponse operatorRes = transaction(clientService.withdraw(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       } else if (DasTransactionCategory.PAYOUT == request.getCategory()) {
+        if (CommonUtils.toCents(request.getAmount()).intValue() > 0) {
+          log.info("deposit with amount {}. throwing expception to test retry logic", request.getAmount());
+          throw Utils.toException(400);
+        } else {
+          log.info("deposit with amount {}", request.getAmount());
+        }
         DepositRequest operatorReq = (DepositRequest) Utils.map(request, setting);
         TransactionResponse operatorRes = transaction(clientService.deposit(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
@@ -188,15 +194,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
   }
 
-  static int counter = 0;
   public TransactionResponse transaction(javax.ws.rs.core.Response res) {
     int status = res.getStatus();
-    // test error handling
-    if (Utils.isSuccess(status) && (counter++ & 1) == 1) {
-      int[] errorcodes = {500, 400};
-      status = errorcodes[(counter/2)%2];
-      log.warn("transaction {}, force client service response status code {}", counter, status);
-    }
     if (Utils.isSuccess(status)){
       return res.readEntity(TransactionResponse.class);
     }
