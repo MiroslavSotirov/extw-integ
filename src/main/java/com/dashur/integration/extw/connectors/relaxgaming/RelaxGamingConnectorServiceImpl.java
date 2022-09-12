@@ -141,7 +141,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         "Unable to find handler for the tx - category => %s", request.getCategory());
   }
 
-  static Boolean retryInProgress = false;
   public DasTransactionResponse doTransaction(Long companyId, DasTransactionRequest request) {
     try {
       RelaxGamingConfiguration.CompanySetting setting =
@@ -155,13 +154,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         TransactionResponse operatorRes = transaction(clientService.withdraw(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       } else if (DasTransactionCategory.PAYOUT == request.getCategory()) {
-        if (retryInProgress == false && CommonUtils.toCents(request.getAmount()).intValue() > 0) {
-          log.info("deposit with amount {}. throwing expception to test retry logic", request.getAmount());
-          retryInProgress = true;
-          throw Utils.toException(400);
-        } else {
-          log.info("deposit with amount {}, retry in progress: {}", request.getAmount(), retryInProgress);
-        }
         DepositRequest operatorReq = (DepositRequest) Utils.map(request, setting);
         TransactionResponse operatorRes = transaction(clientService.deposit(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
