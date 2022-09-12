@@ -106,42 +106,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   @Override
   public DasTransactionResponse transaction(Long companyId, DasTransactionRequest request) {
-    log.info("RelaxGamingConnectorServiceImpl.transaction [{}] [[}]", companyId, request);
-    int millis = 200; // TODO: No hardcoded values - should request after 200 400 800 1600 3200 ms
-    DasTransactionResponse result = null;
-    WebApplicationException error = null;
-    while(result == null){
-      try {
-        result = doTransaction(companyId, request);
-      } catch (WebApplicationException e) {
-        error = e;
-        if(e.getResponse().getStatus() < 500) {
-          throw Utils.toException(e);
-        }
-      }
-
-      if(result != null){
-        return result;
-      }
-
-      try {
-        Thread.sleep(millis);
-      } catch (InterruptedException e3) {
-        log.warn("failed to sleep a thread", e3);
-      }
-
-      millis *= 2;
-      if(millis >= 4000){ // TODO: No hardcoded values
-        //Error might be incorrect
-        throw Utils.toException(error);
-      }
-    }
-
-    throw new ApplicationException(
-        "Unable to find handler for the tx - category => %s", request.getCategory());
-  }
-
-  public DasTransactionResponse doTransaction(Long companyId, DasTransactionRequest request) {
     try {
       RelaxGamingConfiguration.CompanySetting setting =
           relaxConfig.getCompanySettings().get(companyId);
