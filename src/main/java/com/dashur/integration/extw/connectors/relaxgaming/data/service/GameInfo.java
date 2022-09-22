@@ -33,7 +33,7 @@ public class GameInfo {
   private FreeRoundsInfo freespins;
 
   @JsonProperty("legalbetsizes")
-  private List<Integer> legalBetSizes;  // In euro cents
+  private List<Long> legalBetSizes;  // In euro cents
 
   // optional
 

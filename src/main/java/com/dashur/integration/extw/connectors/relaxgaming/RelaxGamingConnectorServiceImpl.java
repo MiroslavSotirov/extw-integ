@@ -315,7 +315,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
           operatorReq.setTxType("deposit");  // freespinpayout or freespinpayoutfinal
           operatorReq.setEnded(Boolean.FALSE);
-          operatorReq.setTimestamp(); // new date().getTime());
+          operatorReq.setTimestamp();
           operatorReq.setRequestId(txRequest.getReqId());
           output = operatorReq;
 
@@ -328,9 +328,10 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
           operatorReq.setOriginalTxId(String.valueOf(txRequest.getRefundTxId()));
           operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
+          operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
           // operatorReq.setEnded(Boolean.FALSE); // only with Paddy Power Betfair
-          operatorReq.setTimestamp(); // new date().getTime());
-          // operatorReq.setOriginalTimestamp(???)          
+          operatorReq.setTimestamp();
+          operatorReq.setOriginalTimestamp(txRequest.getTimestamp().getTime());
           operatorReq.setRequestId(txRequest.getReqId());
           output = operatorReq;
 

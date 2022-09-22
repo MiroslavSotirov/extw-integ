@@ -32,6 +32,7 @@ import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetReplay
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetStateRequest;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetStateResponse;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.FreeRound;
+import com.dashur.integration.extw.connectors.relaxgaming.data.service.FreeRoundsInfo;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.AddFreeRoundsRequest;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.AddFreeRoundsResponse;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetFreeRoundsRequest;
@@ -257,14 +258,19 @@ public class RelaxGamingController {
       if (!hash.getItemId().isEmpty()) {
         GameInfo game = new GameInfo();
         game.setGameRef(getGameRef(hash.getItemId()));
-        game.setName(hash.getName());
+        game.setName(hash.getTitle());
         game.setStudio(relaxConfig.getRgsProvider());
-        List<Integer> legalBetSizes = new ArrayList<Integer>();
+        List<Long> legalBetSizes = new ArrayList<Long>();
         for (Float stake : hash.getStakes().get("EUR")){
-          double bet = stake.doubleValue() * 100;
-          legalBetSizes.add((int)bet);
+          legalBetSizes.add(Math.round(stake.doubleValue() * 100));
         }
         game.setLegalBetSizes(legalBetSizes);
+        FreeRoundsInfo freerounds = new FreeRoundsInfo();
+        freerounds.setChannels(new ArrayList<String>());
+        freerounds.getChannels().add("web");
+        freerounds.setTypes(new ArrayList<String>());
+        freerounds.getTypes().add("regular");
+        game.setFreespins(freerounds);
         games.add(game);
       }
     }

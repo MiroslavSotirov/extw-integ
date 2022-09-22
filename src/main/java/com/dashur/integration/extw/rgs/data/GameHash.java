@@ -24,6 +24,9 @@ public class GameHash {
   @JsonProperty("name")
   private String name;
 
+  @JsonProperty("title")
+  private String title;
+
   @JsonProperty("config")
   private String config;
 
