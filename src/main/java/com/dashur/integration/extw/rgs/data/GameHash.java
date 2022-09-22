@@ -2,6 +2,7 @@ package com.dashur.integration.extw.rgs.data;
 
 import java.util.Map;
 import java.util.List;
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -40,7 +41,7 @@ public class GameHash {
   private String category;
 
   @JsonProperty("stakes")
-  private Map<String, List<Float>> stakes;
+  private Map<String, List<BigDecimal>> stakes;
 
   
 }

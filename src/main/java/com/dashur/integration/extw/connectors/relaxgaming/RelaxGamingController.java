@@ -261,8 +261,8 @@ public class RelaxGamingController {
         game.setName(hash.getTitle());
         game.setStudio(relaxConfig.getRgsProvider());
         List<Long> legalBetSizes = new ArrayList<Long>();
-        for (Float stake : hash.getStakes().get("EUR")){
-          legalBetSizes.add(Math.round(stake.doubleValue() * 100));
+        for (BigDecimal stake : hash.getStakes().get("EUR")){
+          legalBetSizes.add(CommonUtils.toCents(stake));
         }
         game.setLegalBetSizes(legalBetSizes);
         FreeRoundsInfo freerounds = new FreeRoundsInfo();
