@@ -40,6 +40,9 @@ public class GameHash {
   @JsonProperty("category")
   private String category;
 
+  @JsonProperty("flags")
+  private String flags;
+
   @JsonProperty("stakes")
   private Map<String, List<BigDecimal>> stakes;
 

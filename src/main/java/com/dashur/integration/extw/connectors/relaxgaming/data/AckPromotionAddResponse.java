@@ -2,6 +2,8 @@ package com.dashur.integration.extw.connectors.relaxgaming.data;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,19 +15,22 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class ErrorResponse {
+public class AckPromotionAddResponse {
 
-  @JsonProperty("errorcode")
-  private String code;
+  @JsonProperty("promotions_statuses")
+  List<AckPromotionAddResponse.PromotionStatus> promotions;
 
-  @JsonProperty("errormessage")
-  private String message;
+  public class PromotionStatus {
 
-  @JsonProperty("events")
-  private List<Object> events;
+    @JsonProperty("status")
+    private String status;
 
-  @JsonProperty("errorparameters")
-  private ErrorParameters parameters;
+    @JsonProperty("txid")
+    private String txId;
+
+  }
+
 }

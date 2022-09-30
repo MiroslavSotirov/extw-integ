@@ -28,4 +28,8 @@ public class DasResponse {
 
   @JsonProperty("err_desc")
   private String errDesc;
+
+  @JsonProperty("err_code")
+  private String errCode;
+
 }

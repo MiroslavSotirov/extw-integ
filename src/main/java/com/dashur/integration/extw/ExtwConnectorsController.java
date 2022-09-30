@@ -121,6 +121,8 @@ public class ExtwConnectorsController {
   Response error(Exception e, Date start, DasRequest request) {
     String reqId = "";
     String token = null;
+    String errCode = null;
+    String errDesc = null;
     if (Objects.isNull(request) || CommonUtils.isEmptyOrNull(request.getReqId())) {
       reqId = UUID.randomUUID().toString();
     } else {
@@ -146,6 +148,10 @@ public class ExtwConnectorsController {
       status = Response.Status.PAYMENT_REQUIRED;
     } else if (e instanceof ValidationException) {
       status = Response.Status.BAD_REQUEST;
+    } else if (e instanceof CustomException) {
+      status = Response.Status.INTERNAL_SERVER_ERROR;
+      errCode = ((CustomException)e).getErrCode();
+      errDesc = ((CustomException)e).getErrDesc();
     } else {
       status = Response.Status.INTERNAL_SERVER_ERROR;
     }
@@ -155,7 +161,8 @@ public class ExtwConnectorsController {
     resp.setToken(token);
     resp.setTimestamp(new Date());
     resp.setProcessingTime(getProcessingTime(start));
-
+    resp.setErrCode(errCode);
+    resp.setErrDesc(errDesc);
     return Response.status(status).entity(CommonUtils.jsonToString(resp)).build();
   }
 

@@ -7,6 +7,7 @@ import com.dashur.integration.commons.exception.EntityNotExistException;
 import com.dashur.integration.commons.exception.PaymentException;
 import com.dashur.integration.commons.exception.ValidationException;
 import com.dashur.integration.commons.exception.DuplicateException;
+import com.dashur.integration.commons.exception.CustomException;
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
@@ -25,6 +26,7 @@ import com.dashur.integration.extw.connectors.relaxgaming.data.TransactionRespon
 import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenRequest;
 import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenResponse;
 import com.dashur.integration.extw.connectors.relaxgaming.data.WithdrawRequest;
+import com.dashur.integration.extw.connectors.relaxgaming.data.ResponseWrapper;
 import com.dashur.integration.extw.data.DasAuthRequest;
 import com.dashur.integration.extw.data.DasAuthResponse;
 import com.dashur.integration.extw.data.DasBalanceRequest;
@@ -80,8 +82,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Integer partnerId = setting.getPartnerId();
       RelaxGamingClientService clientService = clientService(companyId);
       VerifyTokenRequest operatorReq = (VerifyTokenRequest) Utils.map(request, setting);
-      VerifyTokenResponse operatorRes = clientService.verifyToken(auth, partnerId, operatorReq);
-      return (DasAuthResponse) Utils.map(request, operatorRes);
+      return (DasAuthResponse) Utils.map(request, verifyToken(clientService.verifyToken(auth, partnerId, operatorReq)));
     } catch (WebApplicationException e) {
       throw Utils.toException(e);
     }
@@ -97,8 +98,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Integer partnerId = setting.getPartnerId();
       RelaxGamingClientService clientService = clientService(companyId);
       BalanceRequest operatorReq = (BalanceRequest) Utils.map(request, setting);
-      BalanceResponse operatorRes = clientService.getBalance(auth, partnerId, operatorReq);
-      return (DasBalanceResponse) Utils.map(request, operatorRes);
+      return (DasBalanceResponse) Utils.map(request, balance(clientService.getBalance(auth, partnerId, operatorReq)));
     } catch (WebApplicationException e) {
       throw Utils.toException(e);
     }
@@ -107,6 +107,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasTransactionResponse transaction(Long companyId, DasTransactionRequest request) {
     try {
+      log.info("RelaxGamingConnectorServiceImpl.transaction [{}] [[}]", companyId, request);
       RelaxGamingConfiguration.CompanySetting setting =
           relaxConfig.getCompanySettings().get(companyId);
       RelaxGamingClientService clientService = clientService(companyId);
@@ -116,6 +117,20 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       if (DasTransactionCategory.WAGER == request.getCategory()) {        
         WithdrawRequest operatorReq = (WithdrawRequest) Utils.map(request, setting);
         TransactionResponse operatorRes = transaction(clientService.withdraw(auth, partnerId, operatorReq));
+        if (Objects.isNull(operatorRes.getBalance())) {
+          // null balance when wager is 0 (used for promotions) and Dashur expects it
+          log.info("Send additional balance request due to missing balance in transaction reply. Wager was {}", 
+            operatorReq.getAmount());
+          BalanceRequest balReq = new BalanceRequest();
+          balReq.setPlayerId(operatorReq.getPlayerId());
+          balReq.setGameRef(operatorReq.getGameRef());
+          balReq.setCurrency(operatorReq.getCurrency());
+          balReq.setSessionId(operatorReq.getSessionId());
+          balReq.setTimestamp();
+          balReq.setRequestId();
+          BalanceResponse balResp = balance(clientService.getBalance(auth, partnerId, balReq));
+          operatorRes.setBalance(balResp.getBalance());
+        }
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       } else if (DasTransactionCategory.PAYOUT == request.getCategory()) {
         DepositRequest operatorReq = (DepositRequest) Utils.map(request, setting);
@@ -152,14 +167,26 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
   }
 
-  public TransactionResponse transaction(javax.ws.rs.core.Response res) {
-    int status = res.getStatus();
-    if (Utils.isSuccess(status)){
-      return res.readEntity(TransactionResponse.class);
+  public VerifyTokenResponse verifyToken(ResponseWrapper<VerifyTokenResponse> res) {
+    if (Utils.isSuccess(res.getStatus())) {
+      return res.getResponse(VerifyTokenResponse.class);
     }
-    BaseException e = Utils.toException(status);
-    log.error("clientservice transaction failed", e);
-    throw e;
+    throw Utils.toException(res.getErrorResponse());
+  }
+
+  public BalanceResponse balance(ResponseWrapper<BalanceResponse> res) {
+    if (Utils.isSuccess(res.getStatus())) {
+      return res.getResponse(BalanceResponse.class);
+    }
+    throw Utils.toException(res.getErrorResponse());
+  }
+
+  public TransactionResponse transaction(ResponseWrapper<TransactionResponse> res) {
+    int status = res.getStatus();
+    if (Utils.isSuccess(res.getStatus())) {
+      return res.getResponse(TransactionResponse.class);
+    }
+    throw Utils.toException(res.getErrorResponse());
   }
 
   @Override
@@ -436,6 +463,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
      * @return
      */
     static BaseException toException(WebApplicationException ex) {
+      log.debug("handling WebApplicationException");
       if (Objects.isNull(ex) || Objects.isNull(ex.getResponse())) {
         log.error("error mapping exception. response is null", ex);
         return new ApplicationException("Unhandled exception mapping.");
@@ -449,32 +477,45 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       }
 
       ErrorResponse errorRes = ex.getResponse().readEntity(ErrorResponse.class);
-
       if (Objects.isNull(errorRes) || Objects.isNull(errorRes.getCode())) {
         log.error(
             "error mapping exception. response body is empty - status: [{}]",
             ex.getResponse().getStatus());
         return new ApplicationException("Unhandled exception mapping.");
       }
+      return toException(errorRes);
+      
+    }
 
-      if (errorRes.getCode().equals("INVALID_TOKEN")
-          || errorRes.getCode().equals("BLOCKED_FROM_PRODUCT")
-          || errorRes.getCode().equals("IP_BLOCKED")
-          || errorRes.getCode().equals("SESSION_EXPIRED")) {
+    /**
+     * Map Operator exception object to Dashur exception object
+     *
+     * @param ex
+     * @return
+     */
+    static BaseException toException(ErrorResponse errorRes) {
+      log.debug("handling ErrorResponse %s", errorRes.toString());
+      switch (errorRes.getCode()) {
+      case "INVALID_TOKEN":
+      case "SESSION_EXPIRED":
         return new AuthException(
             "Connector response [%s] - [%s] - events [%s]", 
             errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
-      }
-
-      if (errorRes.getCode().equals("INSUFFICIENT_FUNDS") ||
-        errorRes.getCode().equals("SPENDING_BUDGET_EXCEEDED")) {
+      case "BLOCKED_FROM_PRODUCT":
+      case "IP_BLOCKED":
+      case "DAILY_TIME_LIMIT":
+      case "WEEKLY_TIME_LIMIT":
+      case "MONTHLY_TIME_LIMIT":
+      case "SPENDING_BUDGET_EXCEEDED":
+        return new CustomException(errorRes.getCode());
+      case "CUSTOM_ERROR":
+        return new CustomException(errorRes.getCode(), CommonUtils.jsonToString(errorRes));
+      case "INSUFFICIENT_FUNDS":
         return new PaymentException(
             "Connector response [%s] - [%s] - events [%s]", 
             errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
-      }
-
-      if (errorRes.getCode().equals("TRANSACTION_NOT_FOUND") ||
-        errorRes.getCode().equals("INVALID_TXID")) {
+      case "TRANSACTION_NOT_FOUND":
+      case "INVALID_TXID":
         return new EntityNotExistException(
             "Connector response [%s] - [%s] - events [%s]", 
             errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
@@ -501,6 +542,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
     }
 
+
     /**
      * successful http status code
      */
@@ -516,8 +558,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         return new ApplicationException(toMessage(status));
       }
       // 5xx, unknown error, retry or rollback
-      return new DuplicateException(toMessage(status));
-//      return new PaymentException(toMessage(status));
+      return new PaymentException(toMessage(status));
     }
 
     /**

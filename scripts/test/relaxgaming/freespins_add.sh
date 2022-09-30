@@ -16,7 +16,8 @@ user_input() {
 	fi
 }
 
-TX_ID=114551608043791948 # $(uuid -F siv | cut -c 3-20)
+#TX_ID=114551608043791948 # $(uuid -F siv | cut -c 3-20)
+TX_ID=$(uuid -F siv | cut -c 3-20)
 PLAYER_ID=83224
 GAMEREF=rlx.em.em.7985
 AMOUNT=10

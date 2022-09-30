@@ -1,7 +1,6 @@
 package com.dashur.integration.extw.connectors.relaxgaming.data;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -19,19 +18,36 @@ import lombok.ToString;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class Request {
+public class AckPromotionAddRequest {
 
-  @JsonProperty("timestamp")
-  private Long timestamp;
 
-  @JsonProperty("requestid")
-  private String requestId;
+  @JsonProperty("promotions")
+  List<AckPromotionAddRequest.Promotion> promotions;
 
-  public void setTimestamp() {
-    timestamp = new Date().getTime();
+  public class Promotion {
+
+    @JsonProperty("data")
+    private AckPromotionAddRequest.Promotion.Data data;
+
+    @JsonProperty("playerid")
+    private Integer playerId;
+
+    @JsonProperty("promotionid")
+    private Long promotionId;
+
+    @JsonProperty("txid")
+    private String txId;  
+
+    public class Data {
+
+      @JsonProperty("channel")
+      private String channel;  
+
+      @JsonProperty("freespinsid")
+      private String freespinsId;
+
+    }
+
   }
 
-  public void setRequestId() {
-    requestId = UUID.randomUUID().toString();
-  }
 }

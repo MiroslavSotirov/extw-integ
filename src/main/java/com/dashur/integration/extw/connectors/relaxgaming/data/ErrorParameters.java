@@ -15,17 +15,14 @@ import lombok.ToString;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class ErrorResponse {
+public class ErrorParameters {
 
-  @JsonProperty("errorcode")
-  private String code;
+  @JsonProperty("errorCode")
+  private Long code;
 
-  @JsonProperty("errormessage")
+  @JsonProperty("errorMessage")
   private String message;
 
-  @JsonProperty("events")
-  private List<Object> events;
-
-  @JsonProperty("errorparameters")
-  private ErrorParameters parameters;
+  @JsonProperty("errorDetails")
+  private ErrorDetails details;
 }
