@@ -13,20 +13,7 @@ import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
 import com.dashur.integration.extw.connectors.ConnectorService;
 import com.dashur.integration.extw.connectors.HmacUtil;
-import com.dashur.integration.extw.connectors.relaxgaming.data.ErrorResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.AddFreeSpinsRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.BalanceRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.BalanceResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.DepositRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.PingResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.Request;
-import com.dashur.integration.extw.connectors.relaxgaming.data.Response;
-import com.dashur.integration.extw.connectors.relaxgaming.data.RollbackRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.TransactionResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.WithdrawRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.ResponseWrapper;
+import com.dashur.integration.extw.connectors.relaxgaming.data.*;
 import com.dashur.integration.extw.data.DasAuthRequest;
 import com.dashur.integration.extw.data.DasAuthResponse;
 import com.dashur.integration.extw.data.DasBalanceRequest;
@@ -190,11 +177,27 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   }
 
   public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
+
+    ErrorResponse errorRes = new ErrorResponse();
+    errorRes.setCode("CUSTOM_ERROR");
+    errorRes.setMessage("oOooOo");
+    ErrorParameters errorParams = new ErrorParameters();
+    errorParams.setCode(559L);
+    errorParams.setMessage("CUSTOM_ERROR");
+    ErrorDetails errorDetails = new ErrorDetails();
+    errorDetails.setMessage("Custom error message");
+    errorDetails.setButtonText("Custom error button text");
+    errorDetails.setTitle("Custom error title");
+    errorParams.setDetails(errorDetails);
+    errorRes.setParameters(errorParams);
+    throw Utils.toException(errorRes);
+/*
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
+*/    
   }
 
   @Override

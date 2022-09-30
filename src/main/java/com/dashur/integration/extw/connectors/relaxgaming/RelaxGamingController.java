@@ -266,15 +266,13 @@ public class RelaxGamingController {
         }
         game.setLegalBetSizes(legalBetSizes);
 
-        // some problem is preventing the rgs charts from updating so enable all games
-        if (true) // !CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().indexOf("campaign") >= 0) {
-          FreeRoundsInfo freerounds = new FreeRoundsInfo();
-          freerounds.setChannels(new ArrayList<String>());
-          freerounds.getChannels().add("web");
-          freerounds.setTypes(new ArrayList<String>());
-          freerounds.getTypes().add("regular");
-          game.setFreespins(freerounds);
-        }
+        FreeRoundsInfo freerounds = new FreeRoundsInfo();
+        freerounds.setChannels(new ArrayList<String>());
+        freerounds.getChannels().add("web");
+        freerounds.setTypes(new ArrayList<String>());
+        freerounds.getTypes().add("regular");
+        log.debug("available free rounds: {}", freerounds);
+        game.setFreespins(freerounds);
         games.add(game);
       }
     }
