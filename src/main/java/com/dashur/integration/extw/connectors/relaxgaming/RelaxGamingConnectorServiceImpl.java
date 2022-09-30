@@ -167,26 +167,34 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
   }
 
-  public VerifyTokenResponse verifyToken(ResponseWrapper<VerifyTokenResponse> res) {
-    if (Utils.isSuccess(res.getStatus())) {
-      return res.getResponse(VerifyTokenResponse.class);
-    }
-    throw Utils.toException(res.getErrorResponse());
+  private <T> T readResponse(javax.ws.rs.core.Response res, Class<T> cls) {
+    return res.readEntity(cls);
   }
 
-  public BalanceResponse balance(ResponseWrapper<BalanceResponse> res) {
-    if (Utils.isSuccess(res.getStatus())) {
-      return res.getResponse(BalanceResponse.class);
-    }
-    throw Utils.toException(res.getErrorResponse());
+  private ErrorResponse readErrorResponse(javax.ws.rs.core.Response res) {
+    return res.readEntity(ErrorResponse.class);
   }
 
-  public TransactionResponse transaction(ResponseWrapper<TransactionResponse> res) {
+  public VerifyTokenResponse verifyToken(javax.ws.rs.core.Response res) { // ResponseWrapper<VerifyTokenResponse> res) {
+    if (Utils.isSuccess(res.getStatus())) {
+      return readResponse(res, VerifyTokenResponse.class);
+    }
+    throw Utils.toException(readErrorResponse(res));
+  }
+
+  public BalanceResponse balance(javax.ws.rs.core.Response res) { // ResponseWrapper<BalanceResponse> res) {
+    if (Utils.isSuccess(res.getStatus())) {
+      return readResponse(res, BalanceResponse.class);
+    }
+    throw Utils.toException(readErrorResponse(res));
+  }
+
+  public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
-      return res.getResponse(TransactionResponse.class);
+      return readResponse(res, TransactionResponse.class);
     }
-    throw Utils.toException(res.getErrorResponse());
+    throw Utils.toException(readErrorResponse(res));
   }
 
   @Override

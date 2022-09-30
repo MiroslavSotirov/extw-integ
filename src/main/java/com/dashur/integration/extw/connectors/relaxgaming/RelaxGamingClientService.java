@@ -31,7 +31,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/verifytoken")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  ResponseWrapper<VerifyTokenResponse> verifyToken(
+  // ResponseWrapper<VerifyTokenResponse> 
+  javax.ws.rs.core.Response verifyToken(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final VerifyTokenRequest request);
 
@@ -39,7 +40,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/withdraw")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  ResponseWrapper<TransactionResponse> withdraw(
+  // ResponseWrapper<TransactionResponse> 
+  javax.ws.rs.core.Response withdraw(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final WithdrawRequest request);
 
@@ -47,7 +49,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/deposit")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  ResponseWrapper<TransactionResponse> deposit(
+  //ResponseWrapper<TransactionResponse> 
+  javax.ws.rs.core.Response deposit(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final DepositRequest request);
 
@@ -55,7 +58,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/rollback")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  ResponseWrapper<TransactionResponse> rollback(
+  // ResponseWrapper<TransactionResponse> 
+  javax.ws.rs.core.Response rollback(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final RollbackRequest request);
 
@@ -63,7 +67,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/getbalance")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  ResponseWrapper<BalanceResponse> getBalance(
+  // ResponseWrapper<BalanceResponse> 
+  javax.ws.rs.core.Response getBalance(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final BalanceRequest request);
 
@@ -71,7 +76,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/ackpromotionadd")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  AckPromotionAddResponse ackPromotionAdd(
+  //  AckPromotionAddResponse 
+  javax.ws.rs.core.Response ackPromotionAdd(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final AckPromotionAddRequest request);
 
@@ -79,7 +85,8 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/addfreespins")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  TransactionResponse addFreespins(
+  // TransactionResponse 
+  javax.ws.rs.core.Response addFreespins(
     @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
     final AddFreeSpinsRequest request);
 
