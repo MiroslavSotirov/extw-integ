@@ -266,7 +266,8 @@ public class RelaxGamingController {
         }
         game.setLegalBetSizes(legalBetSizes);
 
-        if (!CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().indexOf("campaign") >= 0) {
+        // some problem is preventing the rgs charts from updating so enable all games
+        if (true) // !CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().indexOf("campaign") >= 0) {
           FreeRoundsInfo freerounds = new FreeRoundsInfo();
           freerounds.setChannels(new ArrayList<String>());
           freerounds.getChannels().add("web");
