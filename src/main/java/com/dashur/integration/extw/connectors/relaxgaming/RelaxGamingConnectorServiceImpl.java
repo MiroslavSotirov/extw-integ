@@ -177,7 +177,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   }
 
   public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
-
+/*
+    // test custom operator error
     ErrorResponse errorRes = new ErrorResponse();
     errorRes.setCode("CUSTOM_ERROR");
     errorRes.setMessage("oOooOo");
@@ -191,13 +192,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     errorParams.setDetails(errorDetails);
     errorRes.setParameters(errorParams);
     throw Utils.toException(errorRes);
-/*
+*/    
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
-*/    
   }
 
   @Override
@@ -333,8 +333,17 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setClientId(clientId);
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
           operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
-          operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
-          operatorReq.setTxType("withdraw");  // freespinbet if amount == 0
+          if (Objects.isNull(txRequest.getCampaignId()) || txRequest.getCampaignId() == 0) {
+            operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
+            operatorReq.setTxType("withdraw");
+          } else {
+            long amount = CommonUtils.toCents(txRequest.getAmount()).longValue();
+            if (amount == 0L) {
+              amount = (long)getMetaData(txRequest).getOrDefault("fs_amount", 0L);
+            }
+            operatorReq.setAmount(amount);
+            operatorReq.setTxType("freespinbet");
+          }
           operatorReq.setEnded(Boolean.FALSE);
           operatorReq.setTimestamp();
           operatorReq.setRequestId(txRequest.getReqId());
