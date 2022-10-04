@@ -177,27 +177,28 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   }
 
   public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
-/*
+
     // test custom operator error
     ErrorResponse errorRes = new ErrorResponse();
     errorRes.setCode("CUSTOM_ERROR");
-    errorRes.setMessage("oOooOo");
+    errorRes.setMessage("oOooOo Ignore This oooOooo");
     ErrorParameters errorParams = new ErrorParameters();
     errorParams.setCode(559L);
     errorParams.setMessage("CUSTOM_ERROR");
     ErrorDetails errorDetails = new ErrorDetails();
-    errorDetails.setMessage("Custom error message");
-    errorDetails.setButtonText("Custom error button text");
-    errorDetails.setTitle("Custom error title");
+    errorDetails.setMessage("This is a custom error message. It's very nice and could be quite verbose. Let's see\nif it handles linebreaks. No need to take it as far as \ttabs though, that would be silly.");
+    errorDetails.setButtonText("A button text that could also be quite long, I guess.");
+    errorDetails.setTitle("A title is a title.");
     errorParams.setDetails(errorDetails);
     errorRes.setParameters(errorParams);
     throw Utils.toException(errorRes);
-*/    
+/*    
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
+*/    
   }
 
   @Override
