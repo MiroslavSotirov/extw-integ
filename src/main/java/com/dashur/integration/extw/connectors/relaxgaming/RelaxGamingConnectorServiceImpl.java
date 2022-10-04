@@ -552,7 +552,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       case "WEEKLY_TIME_LIMIT":
       case "MONTHLY_TIME_LIMIT":
       case "SPENDING_BUDGET_EXCEEDED":
-        return new CustomException(errorRes.getCode());
+        return new CustomException(errorRes.getCode(), errorRes.getCode());
       case "CUSTOM_ERROR":
         return new CustomException(errorRes.getCode(), CommonUtils.jsonToString(errorRes));
       case "INSUFFICIENT_FUNDS":
