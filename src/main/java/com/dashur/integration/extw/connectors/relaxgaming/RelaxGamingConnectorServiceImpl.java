@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Random;
+// import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -198,7 +198,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     errorRes.setParameters(errorParams);
     throw Utils.toException(errorRes);
 */
-
+/*
     String[] errors = {
         "BLOCKED_FROM_PRODUCT",
         "IP_BLOCKED",
@@ -215,14 +215,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     Random rng = new Random(new Date().getTime());
     errorRes.setCode(errors[Math.abs(rng.nextInt()) % errors.length]);
     throw Utils.toException(errorRes);
-
-/*    
+*/    
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
     }
-    throw Utils.toException(readErrorResponse(res));
-*/    
+    throw Utils.toException(readErrorResponse(res));    
   }
 
   @Override
