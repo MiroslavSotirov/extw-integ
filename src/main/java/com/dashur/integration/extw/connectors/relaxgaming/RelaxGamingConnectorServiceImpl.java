@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -176,8 +177,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     throw Utils.toException(readErrorResponse(res));
   }
 
-  public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
 
+//  static final 
+
+
+  public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
+/*
     // test custom operator error
     ErrorResponse errorRes = new ErrorResponse();
     errorRes.setCode("CUSTOM_ERROR");
@@ -192,6 +197,25 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     errorParams.setDetails(errorDetails);
     errorRes.setParameters(errorParams);
     throw Utils.toException(errorRes);
+*/
+
+    String[] errors = {
+        "BLOCKED_FROM_PRODUCT",
+        "IP_BLOCKED",
+        "DAILY_TIME_LIMIT",
+        "WEEKLY_TIME_LIMIT",
+        "MONTHLY_TIME_LIMIT",
+        "SPENDING_BUDGET_EXCEEDED",
+        "CUSTOM_ERROR",
+        "INSUFFICIENT_FUNDS",
+        "TRANSACTION_NOT_FOUND",
+        "INVALID_TXID"
+    }; 
+    ErrorResponse errorRes = new ErrorResponse();
+    Random rng = new Random(new Date().getTime());
+    errorRes.setCode(errors[rng.nextInt() % errors.length]);
+    throw Utils.toException(errorRes);
+
 /*    
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
