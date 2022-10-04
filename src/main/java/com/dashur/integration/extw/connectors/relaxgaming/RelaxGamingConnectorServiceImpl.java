@@ -213,7 +213,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }; 
     ErrorResponse errorRes = new ErrorResponse();
     Random rng = new Random(new Date().getTime());
-    errorRes.setCode(errors[rng.nextInt() % errors.length]);
+    errorRes.setCode(errors[Math.abs(rng.nextInt()) % errors.length]);
     throw Utils.toException(errorRes);
 
 /*    
@@ -539,7 +539,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
      * @return
      */
     static BaseException toException(ErrorResponse errorRes) {
-      log.debug("handling ErrorResponse %s", errorRes.toString());
+      log.debug("handling ErrorResponse {}", errorRes.toString());
       switch (errorRes.getCode()) {
       case "INVALID_TOKEN":
       case "SESSION_EXPIRED":
