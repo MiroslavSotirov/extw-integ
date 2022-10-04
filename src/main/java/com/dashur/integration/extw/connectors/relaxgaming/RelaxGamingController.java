@@ -265,14 +265,15 @@ public class RelaxGamingController {
           legalBetSizes.add(CommonUtils.toCents(stake));
         }
         game.setLegalBetSizes(legalBetSizes);
-
-        FreeRoundsInfo freerounds = new FreeRoundsInfo();
-        freerounds.setChannels(new ArrayList<String>());
-        freerounds.getChannels().add("web");
-        freerounds.setTypes(new ArrayList<String>());
-        freerounds.getTypes().add("regular");
-        log.debug("available free rounds: {}", freerounds);
-        game.setFreespins(freerounds);
+        if (!CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().contains("campaign")) {
+          FreeRoundsInfo freerounds = new FreeRoundsInfo();
+          freerounds.setChannels(new ArrayList<String>());
+          freerounds.getChannels().add("web");
+          freerounds.setTypes(new ArrayList<String>());
+          freerounds.getTypes().add("regular");
+          log.debug("available free rounds: {}", freerounds);
+          game.setFreespins(freerounds);
+        }
         games.add(game);
       }
     }
