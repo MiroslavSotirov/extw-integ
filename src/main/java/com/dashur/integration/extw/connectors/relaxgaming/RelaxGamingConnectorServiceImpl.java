@@ -360,7 +360,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
             operatorReq.setTxType("withdraw");
           } else {
-            operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
+            operatorReq.setAmount(CommonUtils.toCents(txRequest.getFreeAmount()).longValue());
             operatorReq.setTxType("freespinbet");
           }
           log.debug("wager of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
