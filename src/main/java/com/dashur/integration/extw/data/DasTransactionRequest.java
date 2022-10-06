@@ -51,4 +51,8 @@ public class DasTransactionRequest extends DasRequest {
 
   @JsonProperty("campaign_ext_ref")
   private String campaignExtRef;
+
+  @JsonProperty("free_amount")
+  private BigDecimal freeAmount;
+
 }
