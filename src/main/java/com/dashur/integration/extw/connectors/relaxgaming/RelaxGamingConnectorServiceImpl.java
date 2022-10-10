@@ -182,8 +182,10 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
 
   public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
+/*
+    // test case for the ip blocked error
     throw new CustomException("IP_BLOCKED", "IP_BLOCKED");
-
+*/
 /*
     // test custom operator error
     ErrorResponse errorRes = new ErrorResponse();
@@ -217,14 +219,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     Random rng = new Random(new Date().getTime());
     errorRes.setCode(errors[Math.abs(rng.nextInt()) % errors.length]);
     throw Utils.toException(errorRes);
-*/    
-/*    
+*/        
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
-*/    
   }
 
   @Override
