@@ -19,6 +19,11 @@ import org.eclipse.microprofile.config.Config;
 @Slf4j
 public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
   static final String CONFIG_PREFIX = "extw.operator.relaxgaming";
+  static final String OPERATOR_CODE = Constant.OPERATOR_RELAXGAMING;
+  static final String AUTHORIZATION = "Authorization";
+  static final String ROUND_PREFIX = "1040-";
+  static final String DEFAULT_CURRENCY = "EUR";
+  static final String CONF_PARAMS_PREFIX = "ely__";
 
   private String operator;
 

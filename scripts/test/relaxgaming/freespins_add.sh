@@ -24,9 +24,19 @@ AMOUNT=10
 FREESPINS_VALUE=100
 EXPIRES=$(date -u -Iseconds --date "today + 7 days")
 
-#user_input 'enter playerid (empty to cancel):'
-#PLAYER_ID=$INPUT
-#echo "PLAYER_ID $PLAYER_ID"
+user_input "enter playerid (empty to cancel, default $PLAYER_ID):"
+PLAYER_ID=$INPUT
+echo "PLAYER_ID $PLAYER_ID"
+
+echo "enter game id"
+echo "Fox Tale:       7797"
+echo "Spirit Hunters: 7985"
+echo "Wizardz World:  8243"
+echo "Battle ofMyths: 8359"
+echo "Sword King:     8451"
+user_input "(empty to cancel, default $GAMEREF):"
+GAMEREF="rlx.em.em.$INPUT"
+echo "GAMEREF $GAMEREF"
 
 CRED='{ "partnerid": '$PARTNER_ID', "src": "partnerapi", "bouser": "" }'
 REQ='{ "credentials": '$CRED', "jurisdiction": "EU", "txid": '$TX_ID', "playerid": '$PLAYER_ID',  

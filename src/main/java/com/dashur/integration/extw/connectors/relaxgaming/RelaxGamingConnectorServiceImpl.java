@@ -349,7 +349,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         if (DasTransactionCategory.WAGER == txRequest.getCategory()) {
           WithdrawRequest operatorReq = new WithdrawRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(txRequest.getRoundId());
+          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
           operatorReq.setCurrency(txRequest.getCurrency());
@@ -372,7 +372,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         } else if (DasTransactionCategory.PAYOUT == txRequest.getCategory()) {
           DepositRequest operatorReq = new DepositRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(txRequest.getRoundId());
+          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
           operatorReq.setCurrency(txRequest.getCurrency());
@@ -389,7 +389,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         } else if (DasTransactionCategory.REFUND == txRequest.getCategory()) {
           RollbackRequest operatorReq = new RollbackRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(txRequest.getRoundId());
+          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
           operatorReq.setGameRef(gameRef);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
@@ -409,7 +409,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         DasEndRoundRequest endRequest = (DasEndRoundRequest) request;        
         DepositRequest operatorReq = new DepositRequest();
         operatorReq.setPlayerId(Integer.parseInt(endRequest.getAccountExtRef()));
-        operatorReq.setRoundId(endRequest.getRoundId());
+        operatorReq.setRoundId(Utils.removePrefixFromRoundId(endRequest.getRoundId()));
         operatorReq.setGameRef(gameRef);
         operatorReq.setChannel(settings.getChannel());
         operatorReq.setCurrency(endRequest.getCurrency());
@@ -621,6 +621,22 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           new HashMap<>());
       }
       return new HashMap<String,Object>();
+    }
+
+    /**
+     * removePrefixFromRoundId
+     *
+     * disabled for now unless round prefix should be removed before
+     * visibility to client service
+     * 
+     * @param roundId
+     * @return Dashur roundId
+     */
+    static String removePrefixFromRoundId(String roundId) {
+      if (roundId.startsWith(RelaxGamingConfiguration.ROUND_PREFIX)) {
+        return roundId.substring(RelaxGamingConfiguration.ROUND_PREFIX.length());
+      }
+      return roundId;
     }
   }
 }

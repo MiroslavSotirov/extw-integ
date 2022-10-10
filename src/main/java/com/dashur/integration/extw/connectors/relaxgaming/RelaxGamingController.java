@@ -84,12 +84,13 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 @Slf4j
 @Path("/v1/extw/exp/relaxgaming")
 public class RelaxGamingController {
+/*  
   static final String OPERATOR_CODE = Constant.OPERATOR_RELAXGAMING;
   static final String AUTHORIZATION = "Authorization";
   static final String ROUND_PREFIX = "1040-";
   static final String DEFAULT_CURRENCY = "EUR";
   static final String CONF_PARAMS_PREFIX = "ely__";
-
+*/
   @Inject ExtwIntegConfiguration config;
 
   @Inject ConnectorServiceLocator connectorLocator;
@@ -113,7 +114,7 @@ public class RelaxGamingController {
 
   @PostConstruct
   public void init() {
-    relaxConfig = config.configuration(OPERATOR_CODE, RelaxGamingConfiguration.class);
+    relaxConfig = config.configuration(RelaxGamingConfiguration.OPERATOR_CODE, RelaxGamingConfiguration.class);
   }
 
   @GET
@@ -237,7 +238,7 @@ public class RelaxGamingController {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response getGames(
-    @HeaderParam(AUTHORIZATION) String auth, final ServiceRequest request) {
+    @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final ServiceRequest request) {
     if (!authenticate(auth, request.getCredentials().getPartnerId())) {
       return Response.status(401).build();
     }
@@ -268,7 +269,7 @@ public class RelaxGamingController {
         if (!CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().contains("campaign")) {
           FreeRoundsInfo freerounds = new FreeRoundsInfo();
           freerounds.setChannels(new ArrayList<String>());
-          freerounds.getChannels().add("web");
+          freerounds.getChannels().add(setting.getChannel());
           freerounds.setTypes(new ArrayList<String>());
           freerounds.getTypes().add("regular");
           log.debug("available free rounds: {}", freerounds);
@@ -287,7 +288,7 @@ public class RelaxGamingController {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response getState(
-    @HeaderParam(AUTHORIZATION) String auth, final GetStateRequest request) {
+    @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final GetStateRequest request) {
     if (!authenticate(auth, request.getCredentials().getPartnerId())) {
       return Response.status(401).build();
     }
@@ -332,7 +333,7 @@ public class RelaxGamingController {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response getPlaycheck(
-    @HeaderParam(AUTHORIZATION) String auth, final GetReplayRequest request) {
+    @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final GetReplayRequest request) {
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
         return Response.status(401).build();
@@ -373,7 +374,7 @@ public class RelaxGamingController {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response getReplay(
-    @HeaderParam(AUTHORIZATION) String auth, final GetReplayRequest request) {
+    @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final GetReplayRequest request) {
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
         return Response.status(401).build();
@@ -419,7 +420,7 @@ public class RelaxGamingController {
 
     } catch (Exception e) {
       log.error("Unable to get replay [{}] - [{}]", 
-        request.getCredentials().getPartnerId(), request.getRoundId(), e);
+        request.getCredentials().getPartnerId(), getPrefixedRoundId(request.getRoundId()), e);
         return Response.status(500).build();
     }
   }
@@ -429,7 +430,7 @@ public class RelaxGamingController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/freespins/add")
   public Response addFreespins(
-      @HeaderParam(AUTHORIZATION) String auth, final AddFreeRoundsRequest request) {
+      @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final AddFreeRoundsRequest request) {
     RequestContext ctx = RequestContext.instance();
     Long itemId = 0L;
     Long vendorId = 0L;
@@ -456,13 +457,13 @@ public class RelaxGamingController {
 
       currency = request.getCurrency();
       if (Strings.isNullOrEmpty(currency)) {
-        currency = DEFAULT_CURRENCY;
+        currency = RelaxGamingConfiguration.DEFAULT_CURRENCY;
         log.info("defaulting currency to {}", currency);
       }
 
       itemId = getItemId(request.getGameRef());
       campaignId = request.getTxId().toString(); // UUID.randomUUID().toString());
-      campaignExtRef = String.format("%s-%s", OPERATOR_CODE, campaignId);
+      campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, campaignId);
       if (log.isDebugEnabled()) {
         log.debug(
             "/v1/extw/exp/relaxgaming/freespins/add - [{}] [{}] [{}] [{}] [{}]",
@@ -573,7 +574,7 @@ public class RelaxGamingController {
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
-      log.error("Unable to addFreespins [{}] - [{}] - [{}]", OPERATOR_CODE, partnerId, e);
+      log.error("Unable to addFreespins [{}] - [{}] - [{}]", RelaxGamingConfiguration.OPERATOR_CODE, partnerId, e);
       return Response.serverError()
           .type(MediaType.APPLICATION_JSON)
           .encoding("utf-8")
@@ -586,7 +587,7 @@ public class RelaxGamingController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/freespins/get")
   public Response getFreespins(
-      @HeaderParam(AUTHORIZATION) String auth, final GetFreeRoundsRequest request) {
+      @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final GetFreeRoundsRequest request) {
     RequestContext ctx = RequestContext.instance();
     String campaignExtRef = null;
     String partnerId = null;
@@ -646,7 +647,7 @@ public class RelaxGamingController {
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
 
     } catch (Exception e) {
-      log.error("Unable to getFreespins [{}] - [{}] - [{}]", OPERATOR_CODE, partnerId, e);
+      log.error("Unable to getFreespins [{}] - [{}] - [{}]", RelaxGamingConfiguration.OPERATOR_CODE, partnerId, e);
       return Response.ok()
           .type(MediaType.APPLICATION_JSON)
           .encoding("utf-8")
@@ -659,7 +660,7 @@ public class RelaxGamingController {
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/freespins/cancel")
   public Response cancelFreespins(
-      @HeaderParam(AUTHORIZATION) String auth, final CancelFreeRoundsRequest request) {
+      @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final CancelFreeRoundsRequest request) {
     RequestContext ctx = RequestContext.instance();
     String campaignExtRef = null;
     String partnerId = null;
@@ -678,7 +679,7 @@ public class RelaxGamingController {
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
-      campaignExtRef = String.format("%s-%s", OPERATOR_CODE, request.getFreespinsId());
+      campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, request.getFreespinsId());
 
       ctx =
           ctx.withAccessToken(
@@ -727,7 +728,7 @@ public class RelaxGamingController {
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
-      log.error("Unable to cancelFreespins [{}] - [{}] - [{}]", OPERATOR_CODE, partnerId, e);
+      log.error("Unable to cancelFreespins [{}] - [{}] - [{}]", RelaxGamingConfiguration.OPERATOR_CODE, partnerId, e);
       return Response.ok()
           .type(MediaType.APPLICATION_JSON)
           .encoding("utf-8")
@@ -787,7 +788,7 @@ public class RelaxGamingController {
                                        .withLanguage(language);
     if (isDemo) {
       if (Strings.isNullOrEmpty(demoCurrency)) {
-        demoCurrency = DEFAULT_CURRENCY;
+        demoCurrency = RelaxGamingConfiguration.DEFAULT_CURRENCY;
         log.info("defaulting currency to {}", demoCurrency);
       }
       log.info("launching in demo mode with currency {}", demoCurrency);
@@ -823,27 +824,27 @@ public class RelaxGamingController {
       }
 
       if (!CommonUtils.isEmptyOrNull(demoCurrency)) {
-        confParams.put(CONF_PARAMS_PREFIX + "currency", demoCurrency);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "currency", demoCurrency);
       }
 
       if (!CommonUtils.isEmptyOrNull(rcEnable)) {
-        confParams.put(CONF_PARAMS_PREFIX + "rcenable", rcEnable);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "rcenable", rcEnable);
       }
 
       if (!CommonUtils.isEmptyOrNull(rciFrameUrl)) {
-        confParams.put(CONF_PARAMS_PREFIX + "rciframeurl", rciFrameUrl);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "rciframeurl", rciFrameUrl);
       }
 
       if (!CommonUtils.isEmptyOrNull(rcInterval)) {
-        confParams.put(CONF_PARAMS_PREFIX + "rcinterval", rcInterval);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "rcinterval", rcInterval);
       }
 
       if (!CommonUtils.isEmptyOrNull(rcElapsed)) {
-        confParams.put(CONF_PARAMS_PREFIX + "rcelapsed", rcElapsed);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "rcelapsed", rcElapsed);
       }
 
       if (!CommonUtils.isEmptyOrNull(rcHistoryUrl)) {
-        confParams.put(CONF_PARAMS_PREFIX + "rcHistoryUrl", rcHistoryUrl);
+        confParams.put(RelaxGamingConfiguration.CONF_PARAMS_PREFIX + "rcHistoryUrl", rcHistoryUrl);
       }
 
       if (!confParams.isEmpty()) {
@@ -917,7 +918,7 @@ public class RelaxGamingController {
 
     if (validateIp) {
       connectorLocator
-          .getConnector(OPERATOR_CODE)
+          .getConnector(RelaxGamingConfiguration.OPERATOR_CODE)
           .validateIp(companyId, CommonUtils.resolveIpAddress(this.request));
     }
 
@@ -1026,7 +1027,7 @@ public class RelaxGamingController {
    * @return Dashur roundId
    */
   private String getPrefixedRoundId(String roundId) {
-    return ROUND_PREFIX + roundId;
+    return RelaxGamingConfiguration.ROUND_PREFIX + roundId;
   }
 
   /**
