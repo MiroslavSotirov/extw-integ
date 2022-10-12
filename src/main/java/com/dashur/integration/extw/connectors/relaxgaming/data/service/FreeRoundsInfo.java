@@ -24,7 +24,7 @@ public class FreeRoundsInfo {
   private List<String> channels;
 
   @JsonProperty("featuretriggers")
-  private FeatureTriggerInfo featuretriggers;
+  private FeatureTriggerInfo featureTriggers;
 
   @JsonProperty("types")
   private List<String> types;

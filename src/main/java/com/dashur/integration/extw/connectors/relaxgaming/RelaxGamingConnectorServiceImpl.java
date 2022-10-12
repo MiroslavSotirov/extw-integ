@@ -312,6 +312,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Map<String, Object> metaData = getMetaData(request);
       String gameRef = metaData.getOrDefault("gameRef", "").toString();
       String clientId = metaData.getOrDefault("clientId", "").toString();
+      String promoCode = metaData.getOrDefault("promoCode", "").toString();
+      String freespinsId = metaData.getOrDefault("freespinsId", "").toString();
 
       if (gameRef.isEmpty()) {
         throw new ValidationException("Unable to resolve gameRef");
@@ -379,12 +381,19 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
+          operatorReq.setPromoCode(promoCode);
+          operatorReq.setFreespinsId(freespinsId);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setClientId(clientId);
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
           operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
           operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
-          operatorReq.setTxType("deposit");  // freespinpayout or freespinpayoutfinal
+          if (Objects.isNull(txRequest.getCampaignId()) || txRequest.getCampaignId() == 0) {
+            operatorReq.setTxType("deposit");
+          } else {
+            operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
+          }
+          log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
           operatorReq.setTimestamp();
           operatorReq.setRequestId(txRequest.getReqId());
