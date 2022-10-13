@@ -673,7 +673,7 @@ public class RelaxGamingController {
               r.setExpires(toZonedDateTime(m.getEndTime()));
               r.setGameRef(getGameRef(m.getGameId().toString()));
               r.setAmount(m.getNumOfGames());
-              r.setFreespinsId(campaignId);
+              r.setFreespinsId(m.getExtRef());
               if (campaignId.startsWith(RelaxGamingConfiguration.PROMO_PREFIX)) {
                 r.setPromoCode(campaignId.substring(RelaxGamingConfiguration.PROMO_PREFIX.length()));
               }

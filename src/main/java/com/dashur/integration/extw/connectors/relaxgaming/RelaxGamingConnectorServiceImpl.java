@@ -388,8 +388,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             operatorReq.setTxType("deposit");
           } else {
             operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
-            operatorReq.setFreespinsId(Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX));
-            operatorReq.setPromoCode(Utils.removePrefix(operatorReq.getFreespinsId(), RelaxGamingConfiguration.PROMO_PREFIX));
+            operatorReq.setFreespinsId(txRequest.getCampaignExtRef()); // Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX));
+            operatorReq.setPromoCode(Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX + RelaxGamingConfiguration.PROMO_PREFIX));
           }
           log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
