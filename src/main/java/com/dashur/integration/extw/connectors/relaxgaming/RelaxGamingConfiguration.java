@@ -24,6 +24,8 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
   static final String ROUND_PREFIX = "1040-";
   static final String DEFAULT_CURRENCY = "EUR";
   static final String CONF_PARAMS_PREFIX = "ely__";
+  static final String CAMPAIGN_PREFIX = OPERATOR_CODE + "-";
+  static final String PROMO_PREFIX = "promo-";
 
   private String operator;
 

@@ -85,13 +85,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 @Slf4j
 @Path("/v1/extw/exp/relaxgaming")
 public class RelaxGamingController {
-/*  
-  static final String OPERATOR_CODE = Constant.OPERATOR_RELAXGAMING;
-  static final String AUTHORIZATION = "Authorization";
-  static final String ROUND_PREFIX = "1040-";
-  static final String DEFAULT_CURRENCY = "EUR";
-  static final String CONF_PARAMS_PREFIX = "ely__";
-*/
+
   @Inject ExtwIntegConfiguration config;
 
   @Inject ConnectorServiceLocator connectorLocator;
@@ -440,6 +434,7 @@ public class RelaxGamingController {
     Long vendorId = 0L;
     String campaignExtRef = null;
     String campaignId = null;
+    String promoCode = null;
     String partnerId = null;
     String currency = null;
 
@@ -466,8 +461,8 @@ public class RelaxGamingController {
       }
 
       itemId = getItemId(request.getGameRef());
-      campaignId = UUID.randomUUID().toString(); // partnerId + request.getTxId().toString();
-      campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, campaignId);
+      promoCode = request.getPromoCode();
+
       if (log.isDebugEnabled()) {
         log.debug(
             "/v1/extw/exp/relaxgaming/freespins/add - [{}] [{}] [{}] [{}] [{}]",
@@ -475,8 +470,15 @@ public class RelaxGamingController {
             request.getPlayerId(),
             currency,
             itemId,
-            campaignExtRef);
-      }          
+            promoCode);
+      }
+
+      if (CommonUtils.isEmptyOrNull(promoCode)) {
+        campaignId = UUID.randomUUID().toString();
+      } else {
+        campaignId = String.format("promo-%s", promoCode);
+      }
+      campaignExtRef = campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, campaignId);
 
       ctx =
           ctx.withAccessToken(
@@ -543,12 +545,6 @@ public class RelaxGamingController {
         create.setBetLevel(level);
         create.setCurrency(currency);
         create.setStartTime(now.getTime());
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("freespinsId", campaignId);
-        if (!CommonUtils.isEmptyOrNull(request.getPromoCode())) {
-          metadata.put("promoCode", request.getPromoCode());
-        }
-        create.setMetaData(metadata);
 
         campaign = domainService.createCampaign(ctx, create);
       }
@@ -642,33 +638,43 @@ public class RelaxGamingController {
         List<FreeRound> freeRounds = new ArrayList<FreeRound>();
         for (CampaignModel m : campaigns) {
           if (m.getStatus() == CampaignModel.Status.ACTIVE && m.getNumOfGames() > 0) {
-           
-            RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
-              CommonUtils.authorizationBearer(ctx.getAccessToken()),
-              ctx.getTimezone(),
-              ctx.getCurrency(),
-              ctx.getUuid().toString(),
-              ctx.getLanguage(),
-              m.getGameId(),
-              m.getCurrency());
 
-            FreeRound r = new FreeRound();
-            int level = 1;
-            for (BigDecimal amount : betlevelResp.getData().getLevels()) {
-              if (level == m.getBetLevel()) {
-                r.setFreespinValue(amount.multiply(BigDecimal.valueOf(100L)).longValue());
-                break;
+            if (m.getExtRef().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
+
+              String campaignId;
+
+              campaignId = m.getExtRef().substring(RelaxGamingConfiguration.CAMPAIGN_PREFIX.length());
+           
+              RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
+                CommonUtils.authorizationBearer(ctx.getAccessToken()),
+                ctx.getTimezone(),
+                ctx.getCurrency(),
+                ctx.getUuid().toString(),
+                ctx.getLanguage(),
+                m.getGameId(),
+                m.getCurrency());
+
+              FreeRound r = new FreeRound();
+              int level = 1;
+              for (BigDecimal amount : betlevelResp.getData().getLevels()) {
+                if (level == m.getBetLevel()) {
+                  r.setFreespinValue(amount.multiply(BigDecimal.valueOf(100L)).longValue());
+                  break;
+                }
+                level++;
               }
-              level++;
+
+              r.setExpires(toZonedDateTime(m.getEndTime()));
+              r.setGameRef(getGameRef(m.getGameId().toString()));
+              r.setAmount(m.getNumOfGames());
+              r.setFreespinsId(campaignId);
+              if (campaignId.startsWith(RelaxGamingConfiguration.PROMO_PREFIX)) {
+                r.setPromoCode(campaignId.substring(RelaxGamingConfiguration.PROMO_PREFIX.length()));
+              }
+              r.setCreateTime(toZonedDateTime(m.getCreated()));
+              r.setCurrency(m.getCurrency());
+              freeRounds.add(r);
             }
-            r.setExpires(toZonedDateTime(m.getEndTime()));
-            r.setPromoCode(m.getMetaData().getOrDefault("promoCode", "").toString()); // getExtRef());
-            r.setGameRef(getGameRef(m.getGameId().toString()));
-            r.setAmount(m.getNumOfGames());
-            r.setFreespinsId(m.getName()); // toFreespinsId(m.getExtRef()));
-            r.setCreateTime(toZonedDateTime(m.getCreated()));
-            r.setCurrency(m.getCurrency());
-            freeRounds.add(r);
           }
         }
         resp.setFreespins(freeRounds);
@@ -750,10 +756,7 @@ public class RelaxGamingController {
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
-      String campaignId = campaign.getName(); // toFreespinsId(campaign.getExtRef());
-      log.debug("cancel campaign [{}] with full id [{}]", 
-        campaignId, campaign.getExtRef());
-      resp.setFreespinsId(campaignId);
+      resp.setFreespinsId(request.getFreespinsId());
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {

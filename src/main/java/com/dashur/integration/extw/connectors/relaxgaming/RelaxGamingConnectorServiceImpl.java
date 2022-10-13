@@ -312,8 +312,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Map<String, Object> metaData = getMetaData(request);
       String gameRef = metaData.getOrDefault("gameRef", "").toString();
       String clientId = metaData.getOrDefault("clientId", "").toString();
-      String promoCode = metaData.getOrDefault("promoCode", "").toString();
-      String freespinsId = metaData.getOrDefault("freespinsId", "").toString();
 
       if (gameRef.isEmpty()) {
         throw new ValidationException("Unable to resolve gameRef");
@@ -381,8 +379,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
-          operatorReq.setPromoCode(promoCode);
-          operatorReq.setFreespinsId(freespinsId);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setClientId(clientId);
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
@@ -392,6 +388,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             operatorReq.setTxType("deposit");
           } else {
             operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
+            operatorReq.setFreespinsId(txRequest.getCampaignExtRef());
+            operatorReq.setPromoCode(getCampaignPromoCode(txRequest.getCampaignExtRef()));
           }
           log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
@@ -650,6 +648,21 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         return roundId.substring(RelaxGamingConfiguration.ROUND_PREFIX.length());
       }
       return roundId;
+    }
+
+    /**
+     * getCampaignPromoCode
+     *
+     * @param campaignExtRef
+     * @return promo code
+     */
+    static String getCampaignPromoCode(String campaignExtRef) {
+      if (!CommonUtils.isEmptyOrNull(campaignExtRef)) {
+        if (campaignExtRef.startsWith(RelaxGamingConfiguration.PROMO_PREFIX)) {
+          return campaignExtRef.substring(RelaxGamingConfiguration.PROMO_PREFIX.length());
+        }
+      }
+      return null;
     }
   }
 }
