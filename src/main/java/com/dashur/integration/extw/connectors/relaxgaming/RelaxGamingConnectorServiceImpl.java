@@ -353,7 +353,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         if (DasTransactionCategory.WAGER == txRequest.getCategory()) {
           WithdrawRequest operatorReq = new WithdrawRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
+          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
           operatorReq.setCurrency(txRequest.getCurrency());
@@ -376,7 +376,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         } else if (DasTransactionCategory.PAYOUT == txRequest.getCategory()) {
           DepositRequest operatorReq = new DepositRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
+          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(settings.getChannel());
           operatorReq.setCurrency(txRequest.getCurrency());
@@ -388,8 +388,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             operatorReq.setTxType("deposit");
           } else {
             operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
-            operatorReq.setFreespinsId(txRequest.getCampaignExtRef());
-            operatorReq.setPromoCode(getCampaignPromoCode(txRequest.getCampaignExtRef()));
+            operatorReq.setFreespinsId(Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX));
+            operatorReq.setPromoCode(Utils.removePrefix(operatorReq.getFreespinsId(), RelaxGamingConfiguration.PROMO_PREFIX));
           }
           log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
@@ -400,7 +400,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         } else if (DasTransactionCategory.REFUND == txRequest.getCategory()) {
           RollbackRequest operatorReq = new RollbackRequest();
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefixFromRoundId(txRequest.getRoundId()));
+          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
@@ -420,7 +420,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         DasEndRoundRequest endRequest = (DasEndRoundRequest) request;        
         DepositRequest operatorReq = new DepositRequest();
         operatorReq.setPlayerId(Integer.parseInt(endRequest.getAccountExtRef()));
-        operatorReq.setRoundId(Utils.removePrefixFromRoundId(endRequest.getRoundId()));
+        operatorReq.setRoundId(Utils.removePrefix(endRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
         operatorReq.setGameRef(gameRef);
         operatorReq.setChannel(settings.getChannel());
         operatorReq.setCurrency(endRequest.getCurrency());
@@ -635,34 +635,21 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
 
     /**
-     * removePrefixFromRoundId
+     * removePrefix
      *
-     * disabled for now unless round prefix should be removed before
-     * visibility to client service
-     * 
-     * @param roundId
-     * @return Dashur roundId
+     * @param prefixedString
+     * @param prefix
+     * @return prefixedString without the prefx
      */
-    static String removePrefixFromRoundId(String roundId) {
-      if (roundId.startsWith(RelaxGamingConfiguration.ROUND_PREFIX)) {
-        return roundId.substring(RelaxGamingConfiguration.ROUND_PREFIX.length());
-      }
-      return roundId;
-    }
-
-    /**
-     * getCampaignPromoCode
-     *
-     * @param campaignExtRef
-     * @return promo code
-     */
-    static String getCampaignPromoCode(String campaignExtRef) {
-      if (!CommonUtils.isEmptyOrNull(campaignExtRef)) {
-        if (campaignExtRef.startsWith(RelaxGamingConfiguration.PROMO_PREFIX)) {
-          return campaignExtRef.substring(RelaxGamingConfiguration.PROMO_PREFIX.length());
+    static String removePrefix(String prefixedString, String prefix) {
+      if (!CommonUtils.isEmptyOrNull(prefixedString)) {
+        if (prefixedString.startsWith(prefix)) {
+          return prefixedString.substring(prefix.length());
         }
+        return prefixedString;
       }
       return null;
     }
   }
+
 }

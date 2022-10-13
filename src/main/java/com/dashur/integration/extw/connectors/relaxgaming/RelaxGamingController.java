@@ -536,7 +536,7 @@ public class RelaxGamingController {
         CampaignCreateModel create = new CampaignCreateModel();
         create.setEndTime(toDate(request.getExpires()));
         create.setGameId(itemId);
-        create.setName(campaignId); // ExtRef);
+        create.setName(campaignExtRef);
         create.setNumOfGames(request.getAmount());
         create.setExtRef(campaignExtRef);
         create.setAccountId(setting.getCompanyId());
@@ -576,7 +576,7 @@ public class RelaxGamingController {
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
       resp.setTxId(request.getTxId());
-      resp.setFreespinsId(campaignId);
+      resp.setFreespinsId(campaignExtRef);
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
@@ -633,6 +633,9 @@ public class RelaxGamingController {
         // don't do anything.
       }
 
+      // avoid re-fetching bet levels in case of multiple campaigns
+      Map<Long,CampaignBetLevelModel> betLevelMap = Maps.newHashMap();
+
       GetFreeRoundsResponse resp = new GetFreeRoundsResponse();
       if (Objects.nonNull(campaigns)) {
         List<FreeRound> freeRounds = new ArrayList<FreeRound>();
@@ -645,18 +648,21 @@ public class RelaxGamingController {
 
               campaignId = m.getExtRef().substring(RelaxGamingConfiguration.CAMPAIGN_PREFIX.length());
            
-              RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
-                CommonUtils.authorizationBearer(ctx.getAccessToken()),
-                ctx.getTimezone(),
-                ctx.getCurrency(),
-                ctx.getUuid().toString(),
-                ctx.getLanguage(),
-                m.getGameId(),
-                m.getCurrency());
+              if (!betLevelMap.containsKey(m.getGameId())) {
+                RestResponseWrapperModel<CampaignBetLevelModel> betLevelResp = campaignClientService.betLevel(
+                  CommonUtils.authorizationBearer(ctx.getAccessToken()),
+                  ctx.getTimezone(),
+                  ctx.getCurrency(),
+                  ctx.getUuid().toString(),
+                  ctx.getLanguage(),
+                  m.getGameId(),
+                  m.getCurrency());
+                betLevelMap.put(m.getGameId(), betLevelResp.getData());
+              }
 
               FreeRound r = new FreeRound();
               int level = 1;
-              for (BigDecimal amount : betlevelResp.getData().getLevels()) {
+              for (BigDecimal amount : betLevelMap.get(m.getGameId()).getLevels()) {
                 if (level == m.getBetLevel()) {
                   r.setFreespinValue(amount.multiply(BigDecimal.valueOf(100L)).longValue());
                   break;
@@ -714,7 +720,8 @@ public class RelaxGamingController {
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
-      campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, request.getFreespinsId());
+      // campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, request.getFreespinsId());
+      campaignExtRef = request.getFreespinsId();
 
       ctx =
           ctx.withAccessToken(
@@ -756,7 +763,7 @@ public class RelaxGamingController {
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
-      resp.setFreespinsId(request.getFreespinsId());
+      resp.setFreespinsId(campaignExtRef);
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
