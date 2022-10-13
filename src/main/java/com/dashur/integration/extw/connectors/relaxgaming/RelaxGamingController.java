@@ -543,10 +543,12 @@ public class RelaxGamingController {
         create.setBetLevel(level);
         create.setCurrency(currency);
         create.setStartTime(now.getTime());
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("freespinsId", campaignId);
         if (!CommonUtils.isEmptyOrNull(request.getPromoCode())) {
-          create.getMetaData().put("promoCode", request.getPromoCode());
+          metadata.put("promoCode", request.getPromoCode());
         }
-        create.getMetaData().put("freespinsId", campaignId);
+        create.setMetaData(metadata);
 
         campaign = domainService.createCampaign(ctx, create);
       }
@@ -639,7 +641,7 @@ public class RelaxGamingController {
       if (Objects.nonNull(campaigns)) {
         List<FreeRound> freeRounds = new ArrayList<FreeRound>();
         for (CampaignModel m : campaigns) {
-          if (m.getStatus() == CampaignModel.Status.ACTIVE) {
+          if (m.getStatus() == CampaignModel.Status.ACTIVE && m.getNumOfGames() > 0) {
            
             RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
               CommonUtils.authorizationBearer(ctx.getAccessToken()),
