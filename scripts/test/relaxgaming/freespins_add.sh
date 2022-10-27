@@ -23,8 +23,8 @@ GAMEREF=rlx.em.em.7985
 AMOUNT=10
 FREESPINS_VALUE=100
 EXPIRES=$(date -u -Iseconds --date "today + 7 days")
-PROMOCODE="promo1234" # "promo$(uuid)"
-
+PROMOCODE="promo-$(uuid | cut -c -8)" 
+echo "PROMOCODE:$PROMOCODE"
 user_input "enter playerid (empty to cancel, default $PLAYER_ID):"
 PLAYER_ID=$INPUT
 echo "PLAYER_ID $PLAYER_ID"

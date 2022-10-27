@@ -388,8 +388,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
             operatorReq.setTxType("deposit");
           } else {
             operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
-            operatorReq.setFreespinsId(txRequest.getCampaignExtRef()); // Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX));
-            operatorReq.setPromoCode(Utils.removePrefix(txRequest.getCampaignExtRef(), RelaxGamingConfiguration.CAMPAIGN_PREFIX + RelaxGamingConfiguration.PROMO_PREFIX));
+            operatorReq.setFreespinsId(txRequest.getCampaignExtRef());
+            operatorReq.setPromoCode(Utils.getPromoCode(txRequest.getCampaignExtRef()));
           }
           log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
@@ -428,7 +428,13 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         operatorReq.setTxId(String.valueOf(endRequest.getTxId()));
         operatorReq.setSessionId(Long.parseLong(endRequest.getToken()));
         operatorReq.setAmount(0L);
-        operatorReq.setTxType("deposit");  // freespinpayout or freespinpayoutfinal
+        if (Objects.isNull(endRequest.getCampaignId()) || endRequest.getCampaignId() == 0) {
+          operatorReq.setTxType("deposit");
+        } else {
+          operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal          
+          operatorReq.setFreespinsId(endRequest.getCampaignExtRef());
+          operatorReq.setPromoCode(Utils.getPromoCode(endRequest.getCampaignExtRef()));
+        }
         operatorReq.setEnded(Boolean.TRUE);
         operatorReq.setTimestamp(); // new date().getTime());
         operatorReq.setRequestId(endRequest.getReqId());
@@ -650,6 +656,21 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       }
       return null;
     }
+
+    /**
+     * getPromoCode
+     * 
+     * @param campaignExtRef
+     * @return promo code embedded in a campaign ext ref
+     */
+    static String getPromoCode(String campaignExtRef) {
+      int idx = campaignExtRef.indexOf(":");
+      if (idx >= 0) {
+        return campaignExtRef.substring(idx);
+      }
+      return null;
+    }
+
   }
 
 }

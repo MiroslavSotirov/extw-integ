@@ -433,7 +433,6 @@ public class RelaxGamingController {
     Long itemId = 0L;
     Long vendorId = 0L;
     String campaignExtRef = null;
-    String campaignId = null;
     String promoCode = null;
     String partnerId = null;
     String currency = null;
@@ -473,12 +472,12 @@ public class RelaxGamingController {
             promoCode);
       }
 
+      String uuid = UUID.randomUUID().toString();
       if (CommonUtils.isEmptyOrNull(promoCode)) {
-        campaignId = UUID.randomUUID().toString();
+        campaignExtRef = String.format("%s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, uuid);
       } else {
-        campaignId = String.format("promo-%s", promoCode);
+        campaignExtRef = String.format("%s%s:%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, uuid, promoCode);
       }
-      campaignExtRef = campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, campaignId);
 
       ctx =
           ctx.withAccessToken(
@@ -644,10 +643,6 @@ public class RelaxGamingController {
 
             if (m.getExtRef().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
-              String campaignId;
-
-              campaignId = m.getExtRef().substring(RelaxGamingConfiguration.CAMPAIGN_PREFIX.length());
-           
               if (!betLevelMap.containsKey(m.getGameId())) {
                 RestResponseWrapperModel<CampaignBetLevelModel> betLevelResp = campaignClientService.betLevel(
                   CommonUtils.authorizationBearer(ctx.getAccessToken()),
@@ -674,9 +669,7 @@ public class RelaxGamingController {
               r.setGameRef(getGameRef(m.getGameId().toString()));
               r.setAmount(m.getNumOfGames());
               r.setFreespinsId(m.getExtRef());
-              if (campaignId.startsWith(RelaxGamingConfiguration.PROMO_PREFIX)) {
-                r.setPromoCode(campaignId.substring(RelaxGamingConfiguration.PROMO_PREFIX.length()));
-              }
+              r.setPromoCode(getPromoCode(m.getExtRef()));
               r.setCreateTime(toZonedDateTime(m.getCreated()));
               r.setCurrency(m.getCurrency());
               freeRounds.add(r);
@@ -720,7 +713,6 @@ public class RelaxGamingController {
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
-      // campaignExtRef = String.format("%s-%s", RelaxGamingConfiguration.OPERATOR_CODE, request.getFreespinsId());
       campaignExtRef = request.getFreespinsId();
 
       ctx =
@@ -1069,6 +1061,20 @@ public class RelaxGamingController {
    */
   private String getPrefixedRoundId(String roundId) {
     return RelaxGamingConfiguration.ROUND_PREFIX + roundId;
+  }
+
+  /**
+   * getPromoCode
+   * 
+   * @param campaignExtRef
+   * @return promo code embedded in a campaign ext ref
+   */
+  private String getPromoCode(String campaignExtRef) {
+    int idx = campaignExtRef.indexOf(":");
+    if (idx >= 0) {
+      return campaignExtRef.substring(idx);
+    }
+    return null;
   }
 
   /**
