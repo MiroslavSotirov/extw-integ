@@ -639,7 +639,17 @@ public class RelaxGamingController {
       if (Objects.nonNull(campaigns)) {
         List<FreeRound> freeRounds = new ArrayList<FreeRound>();
         for (CampaignModel m : campaigns) {
-          if (m.getStatus() == CampaignModel.Status.ACTIVE && m.getNumOfGames() > 0) {
+
+          Integer remaining = m.getNumOfGames();
+          if (m.getMetaData().containsKey("spins_count")) {
+            Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
+            if (spinsCount.containsKey("remaining")) {
+              remaining = (Integer)spinsCount.get("remaining");
+              log.debug("meta data remaining spins {}", remaining);
+            }
+          }
+
+          if (m.getStatus() == CampaignModel.Status.ACTIVE && remaining > 0) {
 
             if (m.getExtRef().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
@@ -667,7 +677,7 @@ public class RelaxGamingController {
 
               r.setExpires(toZonedDateTime(m.getEndTime()));
               r.setGameRef(getGameRef(m.getGameId().toString()));
-              r.setAmount(m.getNumOfGames());
+              r.setAmount(remaining);
               r.setFreespinsId(m.getExtRef());
               r.setPromoCode(RelaxGamingConnectorServiceImpl.Utils.getPromoCode(m.getExtRef()));
               r.setCreateTime(toZonedDateTime(m.getCreated()));
