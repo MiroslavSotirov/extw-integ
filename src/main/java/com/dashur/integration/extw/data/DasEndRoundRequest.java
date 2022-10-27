@@ -49,4 +49,10 @@ public class DasEndRoundRequest extends DasRequest {
 
   @JsonProperty("revenue")
   private BigDecimal revenue;
+
+  @JsonProperty("campaign_id")
+  private Long campaignId;
+
+  @JsonProperty("campaign_ext_ref")
+  private String campaignExtRef;
 }
