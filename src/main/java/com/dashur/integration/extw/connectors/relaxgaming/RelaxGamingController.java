@@ -669,7 +669,7 @@ public class RelaxGamingController {
               r.setGameRef(getGameRef(m.getGameId().toString()));
               r.setAmount(m.getNumOfGames());
               r.setFreespinsId(m.getExtRef());
-              r.setPromoCode(getPromoCode(m.getExtRef()));
+              r.setPromoCode(RelaxGamingConnectorServiceImpl.Utils.getPromoCode(m.getExtRef()));
               r.setCreateTime(toZonedDateTime(m.getCreated()));
               r.setCurrency(m.getCurrency());
               freeRounds.add(r);
@@ -1061,20 +1061,6 @@ public class RelaxGamingController {
    */
   private String getPrefixedRoundId(String roundId) {
     return RelaxGamingConfiguration.ROUND_PREFIX + roundId;
-  }
-
-  /**
-   * getPromoCode
-   * 
-   * @param campaignExtRef
-   * @return promo code embedded in a campaign ext ref
-   */
-  private String getPromoCode(String campaignExtRef) {
-    int idx = campaignExtRef.indexOf(":");
-    if (idx >= 0) {
-      return campaignExtRef.substring(idx);
-    }
-    return null;
   }
 
   /**

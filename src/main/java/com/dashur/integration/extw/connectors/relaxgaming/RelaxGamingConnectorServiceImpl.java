@@ -666,7 +666,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     static String getPromoCode(String campaignExtRef) {
       int idx = campaignExtRef.indexOf(":");
       if (idx >= 0) {
-        return campaignExtRef.substring(idx);
+        return campaignExtRef.substring(idx+1);
       }
       return null;
     }
