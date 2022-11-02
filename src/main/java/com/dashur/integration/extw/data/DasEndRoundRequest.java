@@ -55,4 +55,8 @@ public class DasEndRoundRequest extends DasRequest {
 
   @JsonProperty("campaign_ext_ref")
   private String campaignExtRef;
+
+  @JsonProperty("spins_remain")
+  private Long spinsRemain;
+
 }

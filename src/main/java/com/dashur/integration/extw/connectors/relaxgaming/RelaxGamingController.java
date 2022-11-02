@@ -432,10 +432,10 @@ public class RelaxGamingController {
     RequestContext ctx = RequestContext.instance();
     Long itemId = 0L;
     Long vendorId = 0L;
-    String campaignExtRef = null;
     String promoCode = null;
     String partnerId = null;
     String currency = null;
+    String name = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
@@ -461,6 +461,8 @@ public class RelaxGamingController {
 
       itemId = getItemId(request.getGameRef());
       promoCode = request.getPromoCode();
+      name = String.format("s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, 
+        CommonUtils.isEmptyOrNull(promoCode) ? UUID.randomUUID().toString() : promoCode);
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -472,13 +474,6 @@ public class RelaxGamingController {
             promoCode);
       }
 
-      String uuid = UUID.randomUUID().toString();
-      if (CommonUtils.isEmptyOrNull(promoCode)) {
-        campaignExtRef = String.format("%s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, uuid);
-      } else {
-        campaignExtRef = String.format("%s%s:%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, uuid, promoCode);
-      }
-
       ctx =
           ctx.withAccessToken(
               commonService.companyAppAccessToken(
@@ -487,66 +482,59 @@ public class RelaxGamingController {
                   setting.getLauncherAppClientCredential(),
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
+
       CampaignModel campaign = null;
-      try {
-        campaign = domainService.searchCampaign(ctx, campaignExtRef);
-      } catch (EntityNotExistException e) {
-        // don't do anything.
+
+      RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
+        CommonUtils.authorizationBearer(ctx.getAccessToken()),
+        ctx.getTimezone(),
+        ctx.getCurrency(),
+        ctx.getUuid().toString(),
+        ctx.getLanguage(),
+        itemId);
+      if (!currencyResp.getData().contains(currency)) {
+        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
       }
 
-      if (Objects.isNull(campaign)) {
+      RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
+        CommonUtils.authorizationBearer(ctx.getAccessToken()),
+        ctx.getTimezone(),
+        ctx.getCurrency(),
+        ctx.getUuid().toString(),
+        ctx.getLanguage(),
+        itemId,
+        currency);
 
-        RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
-          CommonUtils.authorizationBearer(ctx.getAccessToken()),
-          ctx.getTimezone(),
-          ctx.getCurrency(),
-          ctx.getUuid().toString(),
-          ctx.getLanguage(),
-          itemId);
-        if (!currencyResp.getData().contains(currency)) {
-          throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
+      int level = 1;
+      for (BigDecimal amount : betlevelResp.getData().getLevels()) {
+        if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == request.getFreespinValue()) {
+          break;
         }
-
-        RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
-          CommonUtils.authorizationBearer(ctx.getAccessToken()),
-          ctx.getTimezone(),
-          ctx.getCurrency(),
-          ctx.getUuid().toString(),
-          ctx.getLanguage(),
-          itemId,
-          currency);
-
-        int level = 1;
-        for (BigDecimal amount : betlevelResp.getData().getLevels()) {
-          if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == request.getFreespinValue()) {
-            break;
-          }
-          level++;
-        }
-        if (level >= betlevelResp.getData().getLevels().size()) {
-          throw new ValidationException("bet amount of %f is not a valid level: %s", 
-            (double)request.getFreespinValue()/100.0, 
-            betlevelResp.getData().getLevels().toString());
-        }
-
-        Calendar now = Calendar.getInstance();
-        now.add(Calendar.MINUTE, 1);
-
-        CampaignCreateModel create = new CampaignCreateModel();
-        create.setEndTime(toDate(request.getExpires()));
-        create.setGameId(itemId);
-        create.setName(campaignExtRef);
-        create.setNumOfGames(request.getAmount());
-        create.setExtRef(campaignExtRef);
-        create.setAccountId(setting.getCompanyId());
-        create.setStatus(CampaignCreateModel.Status.ACTIVE);
-        create.setType(CampaignCreateModel.Type.FREE_GAMES);
-        create.setBetLevel(level);
-        create.setCurrency(currency);
-        create.setStartTime(now.getTime());
-
-        campaign = domainService.createCampaign(ctx, create);
+        level++;
       }
+      if (level >= betlevelResp.getData().getLevels().size()) {
+        throw new ValidationException("bet amount of %f is not a valid level: %s", 
+          (double)request.getFreespinValue()/100.0, 
+          betlevelResp.getData().getLevels().toString());
+      }
+
+      Calendar now = Calendar.getInstance();
+      now.add(Calendar.MINUTE, 1);
+
+      CampaignCreateModel create = new CampaignCreateModel();
+      create.setEndTime(toDate(request.getExpires()));
+      create.setGameId(itemId);
+      create.setName(name);
+      create.setNumOfGames(request.getAmount());
+      create.setExtRef(promoCode);
+      create.setAccountId(setting.getCompanyId());
+      create.setStatus(CampaignCreateModel.Status.ACTIVE);
+      create.setType(CampaignCreateModel.Type.FREE_GAMES);
+      create.setBetLevel(level);
+      create.setCurrency(currency);
+      create.setStartTime(now.getTime());
+
+      campaign = domainService.createCampaign(ctx, create);
 
       if (Objects.isNull(campaign)) {
         throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
@@ -575,7 +563,7 @@ public class RelaxGamingController {
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
       resp.setTxId(request.getTxId());
-      resp.setFreespinsId(campaignExtRef);
+      resp.setFreespinsId(campaign.getId().toString());
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
@@ -651,7 +639,7 @@ public class RelaxGamingController {
 
           if (m.getStatus() == CampaignModel.Status.ACTIVE && remaining > 0) {
 
-            if (m.getExtRef().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
+            if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
               if (!betLevelMap.containsKey(m.getGameId())) {
                 RestResponseWrapperModel<CampaignBetLevelModel> betLevelResp = campaignClientService.betLevel(
@@ -678,8 +666,8 @@ public class RelaxGamingController {
               r.setExpires(toZonedDateTime(m.getEndTime()));
               r.setGameRef(getGameRef(m.getGameId().toString()));
               r.setAmount(remaining);
-              r.setFreespinsId(m.getExtRef());
-              r.setPromoCode(RelaxGamingConnectorServiceImpl.Utils.getPromoCode(m.getExtRef()));
+              r.setFreespinsId(m.getId().toString());
+              r.setPromoCode(m.getExtRef());
               r.setCreateTime(toZonedDateTime(m.getCreated()));
               r.setCurrency(m.getCurrency());
               freeRounds.add(r);
@@ -706,13 +694,13 @@ public class RelaxGamingController {
   public Response cancelFreespins(
       @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final CancelFreeRoundsRequest request) {
     RequestContext ctx = RequestContext.instance();
-    String campaignExtRef = null;
     String partnerId = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
         return Response.status(401).build();
       }
+
       if (log.isDebugEnabled()) {
         log.debug(
             "/v1/extw/exp/relaxgaming/freespins/cancel - [{}] [{}] [{}]",
@@ -723,7 +711,6 @@ public class RelaxGamingController {
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
-      campaignExtRef = request.getFreespinsId();
 
       ctx =
           ctx.withAccessToken(
@@ -735,7 +722,15 @@ public class RelaxGamingController {
                   setting.getLauncherAppApiCredential()));
       CampaignModel campaign = null;
       try {
-        campaign = domainService.searchCampaign(ctx, campaignExtRef);
+        RestResponseWrapperModel<CampaignModel> result = campaignClientService.get(
+          CommonUtils.authorizationBearer(ctx.getAccessToken()),
+          ctx.getTimezone(),
+          ctx.getCurrency(),
+          ctx.getUuid().toString(),
+          ctx.getLanguage(),
+          request.getFreespinsId());
+        campaign = result.getData();
+
       } catch (EntityNotExistException e) {
         // don't do anything.
       }
@@ -755,7 +750,6 @@ public class RelaxGamingController {
             .build();
       }
 */      
-
       SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
       if (Objects.isNull(memberAccount)) {
         throw new EntityNotExistException("User with ext-ref [%s] does not exists", request.getPlayerId());
@@ -765,7 +759,7 @@ public class RelaxGamingController {
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
-      resp.setFreespinsId(campaignExtRef);
+      resp.setFreespinsId(request.getFreespinsId());
 
       return Response.ok().type(MediaType.APPLICATION_JSON).encoding("utf-8").entity(resp).build();
     } catch (Exception e) {
