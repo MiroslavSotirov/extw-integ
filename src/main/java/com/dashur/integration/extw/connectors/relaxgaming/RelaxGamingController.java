@@ -461,7 +461,7 @@ public class RelaxGamingController {
 
       itemId = getItemId(request.getGameRef());
       promoCode = request.getPromoCode();
-      name = String.format("s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, 
+      name = String.format("%s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, 
         CommonUtils.isEmptyOrNull(promoCode) ? UUID.randomUUID().toString() : promoCode);
 
       if (log.isDebugEnabled()) {
