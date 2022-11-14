@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import java.time.ZonedDateTime;
 
 @Data
 @ToString
@@ -43,11 +44,11 @@ public class Promotion {
   private Integer amount; // amount of rounds. valid range 1-5000
 
   @JsonProperty("freespinvalue")
-  private Long freeSpinValue; // in cents
+  private Long freespinValue; // in cents
 
   // ISO 8601
   @JsonProperty("expires")
-  private String expires;
+  private ZonedDateTime expires;
 
   @JsonProperty("promocode")
   private String promoCode;

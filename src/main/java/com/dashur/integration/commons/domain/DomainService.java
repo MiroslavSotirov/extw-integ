@@ -271,7 +271,7 @@ public interface DomainService {
    * @param accountId
    * @return
    */
-  List<CampaignModel> availableCampaigns(RequestContext context, Long accountId);
+  List<CampaignModel> availableCampaigns(RequestContext context, Long accountId, Boolean incomplete);
 
   /**
    * @param context

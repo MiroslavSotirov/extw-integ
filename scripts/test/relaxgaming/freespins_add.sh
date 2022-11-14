@@ -20,6 +20,7 @@ user_input() {
 TX_ID="1$(uuid -F siv | cut -c 3-20)"
 PLAYER_ID=83224
 GAMEREF=rlx.em.em.7985
+CURRENCY=EUR
 AMOUNT=10
 FREESPINS_VALUE=100
 EXPIRES=$(date -u -Iseconds --date "today + 7 days")
@@ -42,7 +43,7 @@ echo "GAMEREF $GAMEREF"
 CRED='{ "partnerid": '$PARTNER_ID', "src": "partnerapi", "bouser": "" }'
 REQ='{ "credentials": '$CRED', "jurisdiction": "EU", "txid": '$TX_ID', "playerid": '$PLAYER_ID',  
 	"partnerid": '$PARTNER_ID', "gameref": "'$GAMEREF'", "amount": '$AMOUNT', 
-	"freespinvalue": '$FREESPINS_VALUE', "expires": "'$EXPIRES'", "promocode": "'$PROMOCODE'" }'
+	"freespinvalue": '$FREESPINS_VALUE', "expires": "'$EXPIRES'", "currency": "'$CURRENCY'", "promocode": "'$PROMOCODE'" }'
 
 echo $REQ
 

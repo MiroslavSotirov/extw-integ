@@ -545,7 +545,7 @@ public class DomainServiceImpl implements DomainService {
   }
 
   @Override
-  public List<CampaignModel> availableCampaigns(@NonNull RequestContext ctx, @NonNull Long accountId) {
+  public List<CampaignModel> availableCampaigns(@NonNull RequestContext ctx, @NonNull Long accountId, Boolean incomplete) {
     RestResponseWrapperModel<List<CampaignModel>> result;
     try {
       result =
@@ -555,7 +555,8 @@ public class DomainServiceImpl implements DomainService {
               ctx.getCurrency(),
               ctx.getUuid().toString(),
               ctx.getLanguage(),
-              accountId);
+              accountId,
+              incomplete);
     } catch (WebApplicationException e) {
       throw error(e);
     }

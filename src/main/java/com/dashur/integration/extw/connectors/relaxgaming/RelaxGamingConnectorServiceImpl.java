@@ -1,5 +1,6 @@
 package com.dashur.integration.extw.connectors.relaxgaming;
 
+import com.dashur.integration.commons.RequestContext;
 import com.dashur.integration.commons.exception.ApplicationException;
 import com.dashur.integration.commons.exception.AuthException;
 import com.dashur.integration.commons.exception.BaseException;
@@ -26,15 +27,31 @@ import com.dashur.integration.extw.data.DasResponse;
 import com.dashur.integration.extw.data.DasTransactionCategory;
 import com.dashur.integration.extw.data.DasTransactionRequest;
 import com.dashur.integration.extw.data.DasTransactionResponse;
+import com.dashur.integration.commons.domain.DomainService;
+import com.dashur.integration.commons.domain.CommonService;
+import com.dashur.integration.commons.rest.CampaignClientService;
+import com.dashur.integration.commons.rest.model.CampaignCreateModel;
+import com.dashur.integration.commons.rest.model.CampaignModel;
+import com.dashur.integration.commons.rest.model.SimpleAccountModel;
+import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
+import com.dashur.integration.commons.rest.model.CampaignBetLevelModel;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
 // import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.Instant;
+import java.math.BigDecimal;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -42,6 +59,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @Named("relaxgaming-connector")
 @Singleton
@@ -49,6 +67,12 @@ import org.eclipse.microprofile.rest.client.RestClientBuilder;
 public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   @Inject ExtwIntegConfiguration config;
+
+  @Inject DomainService domainService;
+
+  @Inject CommonService commonService;
+
+  @Inject @RestClient CampaignClientService campaignClientService;
 
   private RelaxGamingConfiguration relaxConfig;
 
@@ -70,7 +94,9 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Integer partnerId = setting.getPartnerId();
       RelaxGamingClientService clientService = clientService(companyId);
       VerifyTokenRequest operatorReq = (VerifyTokenRequest) Utils.map(request, setting);
-      return (DasAuthResponse) Utils.map(request, verifyToken(clientService.verifyToken(auth, partnerId, operatorReq)));
+      return (DasAuthResponse) Utils.map(request, 
+        verifyToken(companyId, operatorReq, 
+          clientService.verifyToken(auth, partnerId, operatorReq)));
     } catch (WebApplicationException e) {
       throw Utils.toException(e);
     }
@@ -163,9 +189,15 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     return res.readEntity(ErrorResponse.class);
   }
 
-  public VerifyTokenResponse verifyToken(javax.ws.rs.core.Response res) { // ResponseWrapper<VerifyTokenResponse> res) {
+  public VerifyTokenResponse verifyToken(Long companyId, VerifyTokenRequest req, javax.ws.rs.core.Response res) {
     if (Utils.isSuccess(res.getStatus())) {
-      return readResponse(res, VerifyTokenResponse.class);
+      VerifyTokenResponse vtres = readResponse(res, VerifyTokenResponse.class);
+      try {
+        ackPromotions(companyId, req, vtres);
+      } catch (Exception e) {
+        log.error("ignoring error while ack'ing promotions", e);
+      }
+      return vtres;
     }
     throw Utils.toException(readErrorResponse(res));
   }
@@ -294,6 +326,147 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
   }
 
+
+  /**
+   * ackPromotions
+   * 
+   */
+  private void ackPromotions(Long companyId, 
+    VerifyTokenRequest request, VerifyTokenResponse response) {
+    AckPromotionAddRequest ackRequest = null;
+
+    String currency = response.getCurrency();
+
+    for (Promotion p : response.getPromotions()) {
+      if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
+        p.getGameRef() == request.getGameRef() &&
+        p.getPlayerId() == response.getPlayerId()) {     
+
+        if (Objects.isNull(ackRequest)) {
+          ackRequest = new AckPromotionAddRequest();
+          ackRequest.setPromotions(new ArrayList<AckPromotion>());
+        }
+
+        // relax-[promotionId]:promoCode
+        String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
+        if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
+          campaignExtRef += p.getPromoCode();
+        }
+        String freespinsId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
+
+
+        AckPromotion ackPromotion = new AckPromotion();
+        AckPromotionData data = new AckPromotionData();
+        data.setChannel(request.getChannel());
+        data.setFreespinsId(freespinsId);
+        ackPromotion.setPlayerId(response.getPlayerId());
+        ackPromotion.setPromotionId(p.getPromotionId());
+        ackPromotion.setTxId(p.getTxId());
+        ackPromotion.setData(data);
+        ackRequest.getPromotions().add(ackPromotion);
+      }
+    }
+
+    if (Objects.nonNull(ackRequest)) {
+      RelaxGamingConfiguration.CompanySetting setting = 
+          relaxConfig.getCompanySettings().get(companyId);
+      String auth = setting.getOperatorCredential();
+      Integer partnerId = setting.getPartnerId();
+      clientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
+    }
+  }
+
+  private String createOrJoinCampaign(Long companyId, 
+    String campaignExtRef, String currency, Promotion promotion) {
+    RelaxGamingConfiguration.CompanySetting setting = 
+        relaxConfig.getCompanySettings().get(companyId);
+
+    RequestContext ctx = RequestContext.instance();
+    ctx = ctx.withAccessToken(
+      commonService.companyAppAccessToken(
+          ctx,
+          setting.getLauncherAppClientId(),
+          setting.getLauncherAppClientCredential(),
+          setting.getLauncherAppApiId(),
+          setting.getLauncherAppApiCredential()));
+
+    CampaignModel campaign = domainService.searchCampaign(ctx, campaignExtRef);
+
+    if (Objects.isNull(campaign)) {
+
+      Long itemId = Utils.getItemId(promotion.getGameRef());
+
+      RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
+        CommonUtils.authorizationBearer(ctx.getAccessToken()),
+        ctx.getTimezone(),
+        ctx.getCurrency(),
+        ctx.getUuid().toString(),
+        ctx.getLanguage(),
+        itemId);
+      if (!currencyResp.getData().contains(RelaxGamingConfiguration.DEFAULT_CURRENCY)) {
+        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, RelaxGamingConfiguration.DEFAULT_CURRENCY);
+      }
+      if (!currencyResp.getData().contains(currency)) {
+        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
+      }
+
+      RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
+        CommonUtils.authorizationBearer(ctx.getAccessToken()),
+        ctx.getTimezone(),
+        ctx.getCurrency(),
+        ctx.getUuid().toString(),
+        ctx.getLanguage(),
+        itemId,
+        RelaxGamingConfiguration.DEFAULT_CURRENCY);
+
+      int level = 1;
+      for (BigDecimal amount : betlevelResp.getData().getLevels()) {
+        if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == promotion.getFreespinValue()) {
+          break;
+        }
+        level++;
+      }
+      if (level >= betlevelResp.getData().getLevels().size()) {
+        throw new ValidationException("bet amount of %f is not a valid level: %s", 
+          (double)promotion.getFreespinValue()/100.0, 
+          betlevelResp.getData().getLevels().toString());
+      }
+
+      Calendar now = Calendar.getInstance();
+      now.add(Calendar.MINUTE, 1);
+
+      CampaignCreateModel create = new CampaignCreateModel();
+      create.setEndTime(Utils.toDate(promotion.getExpires()));
+      create.setGameId(itemId);
+      create.setName(campaignExtRef);
+      create.setNumOfGames(promotion.getAmount());
+      create.setExtRef(campaignExtRef);
+      create.setAccountId(setting.getCompanyId());
+      create.setStatus(CampaignCreateModel.Status.ACTIVE);
+      create.setType(CampaignCreateModel.Type.FREE_GAMES);
+      create.setBetLevel(level);
+      create.setCurrency(currency);
+      create.setStartTime(now.getTime());
+
+      campaign = domainService.createCampaign(ctx, create);
+    }
+
+    if (Objects.isNull(campaign)) {
+      throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
+    }
+
+    SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, promotion.getPlayerId().toString());
+    if (Objects.isNull(memberAccount)) {
+      throw new EntityNotExistException("User with ext-ref [%d] does not exists", promotion.getPlayerId());
+    }
+
+    domainService.addCampaignMembers(
+        ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+
+    return campaign.getId().toString();
+  }
+
+
   /** Utility classes */
   static final class Utils {
 
@@ -389,7 +562,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           } else {
             operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
             operatorReq.setFreespinsId(txRequest.getCampaignId().toString());
-            operatorReq.setPromoCode(txRequest.getCampaignExtRef());
+            operatorReq.setPromoCode(Utils.getPromoCode(txRequest.getCampaignExtRef()));
           }
           log.debug("payout of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
@@ -433,7 +606,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         } else {
           operatorReq.setTxType(endRequest.getSpinsRemain() > 0 ? "freespinpayout" : "freespinpayoutfinal");
           operatorReq.setFreespinsId(endRequest.getCampaignId().toString());
-          operatorReq.setPromoCode(endRequest.getCampaignExtRef());
+          operatorReq.setPromoCode(Utils.getPromoCode(endRequest.getCampaignExtRef()));
         }
         operatorReq.setEnded(Boolean.TRUE);
         operatorReq.setTimestamp(); // new date().getTime());
@@ -653,6 +826,49 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           return prefixedString.substring(prefix.length());
         }
         return prefixedString;
+      }
+      return null;
+    }
+
+    /**
+     * getItemId
+     * 
+     * @param gameRef
+     * @return Dashur itemId
+     */
+    static Long getItemId(String gameRef) {
+      String[] parts = gameRef.split("\\.");
+      if (parts.length > 0) {
+        return Long.parseLong(parts[parts.length-1]);
+      }
+      throw new ValidationException("gameRef is malformed [%s]", gameRef);
+    }
+
+    /**
+     * toDate
+     * 
+     * @param zonedDateTime
+     * @return Date
+     */
+    static Date toDate(ZonedDateTime zonedDateTime) {
+      return Date.from(zonedDateTime.toInstant());
+    }
+
+    /**
+     * getPromoCode
+     * 
+     * @param campaignExtRef
+     * @return promo code
+     */
+    static String getPromoCode(String campaignExtRef) {
+      if (!CommonUtils.isEmptyOrNull(campaignExtRef)) {
+        int idx = campaignExtRef.indexOf(":");
+        if (idx >= 0) {
+          String promoCode = campaignExtRef.substring(idx+1);
+          if (promoCode.length() > 0) {
+            return promoCode;
+          }
+        }
       }
       return null;
     }

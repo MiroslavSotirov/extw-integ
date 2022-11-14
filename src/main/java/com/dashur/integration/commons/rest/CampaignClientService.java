@@ -93,7 +93,8 @@ public interface CampaignClientService {
       @HeaderParam(Constant.REST_HEADER_X_DAS_CURRENCY) String currency,
       @HeaderParam(Constant.REST_HEADER_X_DAS_TX_ID) String txId,
       @HeaderParam(Constant.REST_HEADER_X_DAS_TX_LANG) String lang,
-      @QueryParam("account_id") Long accountId);
+      @QueryParam("account_id") Long accountId,
+      @QueryParam("incomplete") Boolean incomplete);
 
   @POST
   @Path("/v1/campaign/{reference}/member")

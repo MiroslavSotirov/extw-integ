@@ -39,8 +39,8 @@ public class AddFreeRoundsRequest extends ServiceRequest {
   @JsonProperty("freespinvalue")
   private Long freespinValue; // vale of single round in (default EUR) cents
 
+  // ISO 8601. default 7 days
   @JsonProperty("expires")
-//  private String expires;     // ISO 8601. default 7 days
   private ZonedDateTime expires;
 
   // optional

@@ -435,7 +435,7 @@ public class RelaxGamingController {
     String promoCode = null;
     String partnerId = null;
     String currency = null;
-    String name = null;
+    String campaignExtRef = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
@@ -459,10 +459,12 @@ public class RelaxGamingController {
         log.info("defaulting currency to {}", currency);
       }
 
-      itemId = getItemId(request.getGameRef());
-      promoCode = request.getPromoCode();
-      name = String.format("%s%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, 
-        CommonUtils.isEmptyOrNull(promoCode) ? UUID.randomUUID().toString() : promoCode);
+      itemId = RelaxGamingConnectorServiceImpl.Utils.getItemId(request.getGameRef());
+        // relax-api:promoCode
+      campaignExtRef = String.format("%sapi:", RelaxGamingConfiguration.CAMPAIGN_PREFIX);
+      if (!CommonUtils.isEmptyOrNull(request.getPromoCode())) {
+        campaignExtRef += request.getPromoCode();
+      }
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -471,7 +473,7 @@ public class RelaxGamingController {
             request.getPlayerId(),
             currency,
             itemId,
-            promoCode);
+            campaignExtRef);
       }
 
       ctx =
@@ -522,11 +524,11 @@ public class RelaxGamingController {
       now.add(Calendar.MINUTE, 1);
 
       CampaignCreateModel create = new CampaignCreateModel();
-      create.setEndTime(toDate(request.getExpires()));
+      create.setEndTime(RelaxGamingConnectorServiceImpl.Utils.toDate(request.getExpires()));
       create.setGameId(itemId);
-      create.setName(name);
+      create.setName(campaignExtRef);
       create.setNumOfGames(request.getAmount());
-      create.setExtRef(promoCode);
+      create.setExtRef(campaignExtRef);
       create.setAccountId(setting.getCompanyId());
       create.setStatus(CampaignCreateModel.Status.ACTIVE);
       create.setType(CampaignCreateModel.Type.FREE_GAMES);
@@ -615,7 +617,7 @@ public class RelaxGamingController {
 
       List<CampaignModel> campaigns = null;
       try {
-        campaigns = domainService.availableCampaigns(ctx, memberAccount.getId());
+        campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
       } catch (EntityNotExistException e) {
         // don't do anything.
       }
@@ -667,7 +669,7 @@ public class RelaxGamingController {
               r.setGameRef(getGameRef(m.getGameId().toString()));
               r.setAmount(remaining);
               r.setFreespinsId(m.getId().toString());
-              r.setPromoCode(m.getExtRef());
+              r.setPromoCode(RelaxGamingConnectorServiceImpl.Utils.getPromoCode(m.getExtRef()));
               r.setCreateTime(toZonedDateTime(m.getCreated()));
               r.setCurrency(m.getCurrency());
               freeRounds.add(r);
@@ -1004,16 +1006,6 @@ public class RelaxGamingController {
   }
 
   /**
-   * toDate
-   * 
-   * @param zonedDateTime
-   * @return Date
-   */
-  private Date toDate(ZonedDateTime zonedDateTime) {
-    return Date.from(zonedDateTime.toInstant());
-  }
-
-  /**
    * toFreespinsId
    * 
    * WARNING: do not use with UUID
@@ -1041,20 +1033,6 @@ public class RelaxGamingController {
       relaxConfig.getPlatform(), 
       relaxConfig.getGamestudio(),
       gameId);
-  }
-
-  /**
-   * getItemId
-   * 
-   * @param gameRef
-   * @return Dashur itemId
-   */
-  private Long getItemId(String gameRef) {
-    String[] parts = gameRef.split("\\.");
-    if (parts.length > 0) {
-      return Long.parseLong(parts[parts.length-1]);
-    }
-    throw new ValidationException("gameRef is malformed [%s]", gameRef);
   }
 
   /**

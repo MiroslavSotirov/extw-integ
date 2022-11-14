@@ -18,9 +18,11 @@ import lombok.ToString;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class AckPromotionAddRequest {
+public class AckPromotionData {
 
-  @JsonProperty("promotions")
-  List<AckPromotion> promotions;
+  @JsonProperty("channel")
+  private String channel;  
 
+  @JsonProperty("freespinsid")
+  private String freespinsId;
 }

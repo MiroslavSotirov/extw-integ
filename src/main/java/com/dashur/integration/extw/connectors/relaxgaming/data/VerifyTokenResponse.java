@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import java.time.ZonedDateTime;
 
 @Data
 @ToString
@@ -43,11 +44,11 @@ public class VerifyTokenResponse extends Response {
 
   // ISO 8601
   @JsonProperty("birthdate")
-  private String birthDate;
+  private ZonedDateTime birthDate;
 
   // ISO 8601
   @JsonProperty("lastlogin")
-  private String lastLogin;
+  private ZonedDateTime lastLogin;
 
   @JsonProperty("jurisdiction")
   private String jurisdiction;
