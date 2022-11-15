@@ -10,6 +10,7 @@ import com.dashur.integration.commons.rest.model.CampaignCreateModel;
 import com.dashur.integration.commons.rest.model.CampaignMemberModel;
 import com.dashur.integration.commons.rest.model.CampaignModel;
 import com.dashur.integration.commons.rest.model.CampaignUpdateModel;
+import com.dashur.integration.commons.rest.model.CampaignAssignmentModel;
 import com.dashur.integration.commons.rest.model.SimpleAccountModel;
 import com.dashur.integration.commons.rest.model.SimpleApplicationItemModel;
 import com.dashur.integration.commons.rest.model.SimpleItemModel;
@@ -281,6 +282,14 @@ public interface DomainService {
    */
   List<CampaignMemberModel> addCampaignMembers(
       RequestContext context, Long campaignId, List<String> members);
+
+  /**
+   * @param context
+   * @param model
+   * @return
+   */
+  CampaignMemberModel assignCampaignMember(
+      RequestContext context, CampaignAssignmentModel model);
 
   /**
    * @param context

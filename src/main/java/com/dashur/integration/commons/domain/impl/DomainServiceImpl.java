@@ -27,6 +27,7 @@ import com.dashur.integration.commons.rest.model.CampaignCreateModel;
 import com.dashur.integration.commons.rest.model.CampaignMemberModel;
 import com.dashur.integration.commons.rest.model.CampaignModel;
 import com.dashur.integration.commons.rest.model.CampaignUpdateModel;
+import com.dashur.integration.commons.rest.model.CampaignAssignmentModel;
 import com.dashur.integration.commons.rest.model.ErrorModel;
 import com.dashur.integration.commons.rest.model.LoginMemberModel;
 import com.dashur.integration.commons.rest.model.MemberTokenModel;
@@ -582,6 +583,30 @@ public class DomainServiceImpl implements DomainService {
               ctx.getLanguage(),
               String.valueOf(campaignId),
               members);
+    } catch (WebApplicationException e) {
+      throw error(e);
+    }
+
+    if (result.hasError()) {
+      throw new ApplicationException("Rest application has error");
+    }
+
+    return result.getData();
+  }
+
+  @Override
+  public CampaignMemberModel assignCampaignMember(
+      @NonNull RequestContext ctx, @NonNull CampaignAssignmentModel model) {
+    RestResponseWrapperModel<CampaignMemberModel> result;
+    try {
+      result =
+          campaignClientService.assignment(
+              CommonUtils.authorizationBearer(ctx.getAccessToken()),
+              ctx.getTimezone(),
+              ctx.getCurrency(),
+              ctx.getUuid().toString(),
+              ctx.getLanguage(),
+              model);
     } catch (WebApplicationException e) {
       throw error(e);
     }

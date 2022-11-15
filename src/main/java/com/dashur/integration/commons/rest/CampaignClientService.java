@@ -121,4 +121,16 @@ public interface CampaignClientService {
       @HeaderParam(Constant.REST_HEADER_X_DAS_TX_LANG) String lang,
       @PathParam("reference") String reference,
       final List<String> list);
+
+  @POST
+  @Path("/v1/campaign/assignment")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  RestResponseWrapperModel<CampaignMemberModel> assignment(
+      @HeaderParam(Constant.REST_HEADER_AUTHORIZATION) String auth,
+      @HeaderParam(Constant.REST_HEADER_X_DAS_TZ) String tz,
+      @HeaderParam(Constant.REST_HEADER_X_DAS_CURRENCY) String currency,
+      @HeaderParam(Constant.REST_HEADER_X_DAS_TX_ID) String txId,
+      @HeaderParam(Constant.REST_HEADER_X_DAS_TX_LANG) String lang,
+      final CampaignAssignmentModel model);
 }
