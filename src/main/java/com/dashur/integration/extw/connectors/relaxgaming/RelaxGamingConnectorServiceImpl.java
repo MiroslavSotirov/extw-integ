@@ -214,9 +214,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         log.info("adding test promotion {}", p);
         vtres.setPromotions(promotions);
         */
-        //ackPromotions(companyId, req, vtres);
-        throw new ValidationException("ackPromotionAdd failed");
-
+        ackPromotions(companyId, req, vtres);
       } catch (WebApplicationException ex) {
         log.error("ignoring WebApplicationException while ack'ing promotions", ex);
         ex.getResponse().close();
