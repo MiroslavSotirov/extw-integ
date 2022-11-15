@@ -39,18 +39,21 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
-// import java.util.Random;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.time.ZonedDateTime;
 import java.time.ZoneOffset;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.math.BigDecimal;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -193,6 +196,23 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     if (Utils.isSuccess(res.getStatus())) {
       VerifyTokenResponse vtres = readResponse(res, VerifyTokenResponse.class);
       try {
+        // ubo promotions test code
+        List<Promotion> promotions = new ArrayList<Promotion>();
+        Promotion p = new Promotion();
+        p.setPromotionType("freerounds");
+        p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
+        p.setTxId(UUID.randomUUID().toString());
+        p.setPlayerId(vtres.getPlayerId());
+        p.setPartnerId(vtres.getPartnerId());
+        p.setGameRef(req.getGameRef());
+        p.setAmount(10);
+        p.setFreespinValue(100L);
+        p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+        p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
+        promotions.add(p);
+        log.info("adding test promotion {}", p);
+        vtres.setPromotions(promotions);
+
         ackPromotions(companyId, req, vtres);
       } catch (Exception e) {
         log.error("ignoring error while ack'ing promotions", e);

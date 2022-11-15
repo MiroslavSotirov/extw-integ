@@ -17,11 +17,10 @@ user_input() {
 }
 
 PLAYER_ID=83224
-GAMEREF=rlx.em.em.7985
-AMOUNT=10
 FREESPINS_ID=1107
-EXPIRES=$(date -u -Iseconds --date "today + 7 days")
 
+user_input "enter playerid (empty to cancel. example $PLAYER_ID):"
+PLAYER_ID=$INPUT
 user_input "enter freespinsid (empty to cancel. example $FREESPINS_ID):"
 FREESPINS_ID=$INPUT
 
