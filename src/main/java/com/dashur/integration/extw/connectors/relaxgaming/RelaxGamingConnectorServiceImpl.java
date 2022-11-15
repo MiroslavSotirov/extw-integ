@@ -410,7 +410,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           setting.getLauncherAppApiId(),
           setting.getLauncherAppApiCredential()));
 
-    CampaignModel campaign = domainService.searchCampaign(ctx, campaignExtRef);
+    CampaignModel campaign = null;
+    try {
+      campaign = domainService.searchCampaign(ctx, campaignExtRef);
+    } catch (Exception e) {
+      // do nothing
+    }
 
     if (Objects.isNull(campaign)) {
 
