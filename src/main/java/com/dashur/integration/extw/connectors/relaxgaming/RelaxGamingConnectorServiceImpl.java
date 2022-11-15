@@ -214,8 +214,11 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         vtres.setPromotions(promotions);
 
         ackPromotions(companyId, req, vtres);
+      } catch (WebApplicationException ex) {
+        log.error("ignoring WebApplicationException while ack'ing promotions", ex);
+        ex.getResponse().close();
       } catch (Exception e) {
-        log.error("ignoring error while ack'ing promotions", e);
+        log.error("ignoring Exception while ack'ing promotions", e);
       }
       return vtres;
     }
