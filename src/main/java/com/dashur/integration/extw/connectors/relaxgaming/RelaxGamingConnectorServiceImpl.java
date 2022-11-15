@@ -197,6 +197,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       VerifyTokenResponse vtres = readResponse(res, VerifyTokenResponse.class);
       try {
         // ubo promotions test code
+        /*
         List<Promotion> promotions = new ArrayList<Promotion>();
         Promotion p = new Promotion();
         p.setPromotionType("freerounds");
@@ -212,8 +213,10 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         promotions.add(p);
         log.info("adding test promotion {}", p);
         vtres.setPromotions(promotions);
+        */
+        //ackPromotions(companyId, req, vtres);
+        throw new ValidationException("ackPromotionAdd failed");
 
-        ackPromotions(companyId, req, vtres);
       } catch (WebApplicationException ex) {
         log.error("ignoring WebApplicationException while ack'ing promotions", ex);
         ex.getResponse().close();
