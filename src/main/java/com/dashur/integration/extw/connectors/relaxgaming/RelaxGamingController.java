@@ -17,6 +17,7 @@ import com.dashur.integration.commons.rest.model.SimpleAccountModel;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
 import com.dashur.integration.commons.rest.model.CampaignBetLevelModel;
 import com.dashur.integration.commons.rest.model.SimplifyLauncherItemModel;
+import com.dashur.integration.commons.rest.model.CampaignAssignmentModel;
 import com.dashur.integration.commons.domain.DomainService;
 import com.dashur.integration.commons.domain.CommonService;
 import com.dashur.integration.extw.Constant;
@@ -560,8 +561,16 @@ public class RelaxGamingController {
         throw new EntityNotExistException("User with ext-ref [%d] does not exists", request.getPlayerId());
       }
 
+      /*
       domainService.addCampaignMembers(
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+      */
+      CampaignAssignmentModel assignMember = new CampaignAssignmentModel();
+      assignMember.setAccountExtRef(request.getPlayerId().toString());
+      assignMember.setCampaignId(campaign.getId());
+      assignMember.setGameId(itemId);
+      domainService.assignCampaignMember(
+        ctx, assignMember);
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
       resp.setTxId(request.getTxId());
