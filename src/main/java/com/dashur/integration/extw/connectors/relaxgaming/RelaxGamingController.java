@@ -12,6 +12,7 @@ import com.dashur.integration.commons.rest.LauncherClientService;
 import com.dashur.integration.commons.rest.model.TransactionRoundModel;
 import com.dashur.integration.commons.rest.model.TransactionFeedModel;
 import com.dashur.integration.commons.rest.model.CampaignCreateModel;
+import com.dashur.integration.commons.rest.model.CampaignUpdateModel;
 import com.dashur.integration.commons.rest.model.CampaignModel;
 import com.dashur.integration.commons.rest.model.SimpleAccountModel;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
@@ -768,6 +769,21 @@ public class RelaxGamingController {
 
       domainService.delCampaignMembers(
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+
+      CampaignUpdateModel update = new CampaignUpdateModel();
+      update.setName(campaign.getName());
+      update.setNumOfGames(campaign.getNumOfGames());
+      update.setStatus(CampaignUpdateModel.Status.CLOSED);
+      update.setType(CampaignUpdateModel.Type.FREE_GAMES);
+      update.setGameId(campaign.getGameId());
+      update.setBetLevel(campaign.getBetLevel());
+      update.setStartTime(campaign.getStartTime());
+      update.setEndTime(campaign.getEndTime());
+      update.setMetaData(campaign.getMetaData());
+      update.setVersion(campaign.getVersion());
+
+      domainService.updateCampaign(ctx, campaign.getId(), update);
+
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
       resp.setFreespinsId(request.getFreespinsId());
