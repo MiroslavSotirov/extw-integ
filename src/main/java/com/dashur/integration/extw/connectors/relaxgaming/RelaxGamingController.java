@@ -848,13 +848,13 @@ public class RelaxGamingController {
       String[] channels = setting.getChannel().split(",");
       boolean found = false;
       for (String ch : channels) {
-        if (ch == channel) {
+        if (ch.equals(channel)) {
           found = true;
           break;
         }
       }
       if (!found) {
-        throw new ValidationException("channel [%s] is not one of the configured channels [%s]", channel, channels);
+        throw new ValidationException("channel [%s] is not one of the configured channels [%s]", channel, setting.getChannel());
       /*
         log.warn("channel {} is not equal to configured channel {} for partnerId {}", 
           channel, setting.getChannel(), partnerId);
