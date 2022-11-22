@@ -265,8 +265,13 @@ public class RelaxGamingController {
         game.setLegalBetSizes(legalBetSizes);
         if (!CommonUtils.isEmptyOrNull(hash.getFlags()) && hash.getFlags().contains("campaign")) {
           FreeRoundsInfo freerounds = new FreeRoundsInfo();
-          freerounds.setChannels(new ArrayList<String>());
-          freerounds.getChannels().add(setting.getChannel());
+          if (!CommonUtils.isEmptyOrNull(setting.getChannel())) {
+            freerounds.setChannels(new ArrayList<String>());
+            String[] channels = setting.getChannel().split(",");
+            for (String ch : channels) {
+              freerounds.getChannels().add(ch);
+            }
+          }
           freerounds.setTypes(new ArrayList<String>());
           freerounds.getTypes().add("regular");
           FeatureTriggerInfo featureTriggers = new FeatureTriggerInfo();
@@ -838,10 +843,23 @@ public class RelaxGamingController {
       ) {
 
     RelaxGamingConfiguration.CompanySetting setting = getCompanySettings(partnerId, false);
-    if (!channel.equals(setting.getChannel())) {
-      // throw new ValidationException("channel [%s] is invalid for partnerId [%s]", channel, partnerId);
-      log.warn("channel {} is not equal to configured channel {} for partnerId {}", 
-        channel, setting.getChannel(), partnerId);
+
+    if (!CommonUtils.isEmptyOrNull(setting.getChannel())) {
+      String[] channels = setting.getChannel().split(",");
+      boolean found = false;
+      for (String ch : channels) {
+        if (ch == channel) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        throw new ValidationException("channel [%s] is not one of the configured channels [%s]", channel, channels);
+      /*
+        log.warn("channel {} is not equal to configured channel {} for partnerId {}", 
+          channel, setting.getChannel(), partnerId);
+      */
+      }
     }
 
     Boolean isDemo = mode.equals("fun");
@@ -858,6 +876,7 @@ public class RelaxGamingController {
     }
     ctx.getMetaData().put("clientId", clientId);
     ctx.getMetaData().put("gameRef", getGameRef(gameId));
+    ctx.getMetaData().put("channel", channel);
     log.debug("launcher request context: {}", ctx.getMetaData());
 
     ctx =

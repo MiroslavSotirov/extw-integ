@@ -516,6 +516,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       Map<String, Object> metaData = getMetaData(request);
       String gameRef = metaData.getOrDefault("gameRef", "").toString();
       String clientId = metaData.getOrDefault("clientId", "").toString();
+      String channel = metaData.getOrDefault("channel", "").toString();
 
       if (gameRef.isEmpty()) {
         throw new ValidationException("Unable to resolve gameRef");
@@ -532,7 +533,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           throw new ValidationException("Unable to resolve player ip address");
         }
         VerifyTokenRequest operatorReq = new VerifyTokenRequest();
-        operatorReq.setChannel(settings.getChannel());
+        operatorReq.setChannel(channel);
         operatorReq.setClientId(clientId);
         operatorReq.setToken(request.getToken());
         operatorReq.setGameRef(gameRef);
@@ -559,7 +560,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
           operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
-          operatorReq.setChannel(settings.getChannel());
+          operatorReq.setChannel(channel);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setClientId(clientId);
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
@@ -582,7 +583,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
           operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
-          operatorReq.setChannel(settings.getChannel());
+          operatorReq.setChannel(channel);
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setClientId(clientId);
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
@@ -626,7 +627,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         operatorReq.setPlayerId(Integer.parseInt(endRequest.getAccountExtRef()));
         operatorReq.setRoundId(Utils.removePrefix(endRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
         operatorReq.setGameRef(gameRef);
-        operatorReq.setChannel(settings.getChannel());
+        operatorReq.setChannel(channel);
         operatorReq.setCurrency(endRequest.getCurrency());
         operatorReq.setClientId(clientId);
         operatorReq.setTxId(String.valueOf(endRequest.getTxId()));
