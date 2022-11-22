@@ -361,33 +361,35 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
     String currency = response.getCurrency();
 
-    for (Promotion p : response.getPromotions()) {
-      if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
-        p.getGameRef() == request.getGameRef() &&
-        p.getPlayerId() == response.getPlayerId()) {     
+    if (Objects.nonNull(response.getPromotions())) {
+      for (Promotion p : response.getPromotions()) {
+        if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
+          p.getGameRef() == request.getGameRef() &&
+          p.getPlayerId() == response.getPlayerId()) {     
 
-        if (Objects.isNull(ackRequest)) {
-          ackRequest = new AckPromotionAddRequest();
-          ackRequest.setPromotions(new ArrayList<AckPromotion>());
+          if (Objects.isNull(ackRequest)) {
+            ackRequest = new AckPromotionAddRequest();
+            ackRequest.setPromotions(new ArrayList<AckPromotion>());
+          }
+
+          // relax-[promotionId]:promoCode
+          String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
+          if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
+            campaignExtRef += p.getPromoCode();
+          }
+          String freespinsId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
+
+
+          AckPromotion ackPromotion = new AckPromotion();
+          AckPromotionData data = new AckPromotionData();
+          data.setChannel(request.getChannel());
+          data.setFreespinsId(freespinsId);
+          ackPromotion.setPlayerId(response.getPlayerId());
+          ackPromotion.setPromotionId(p.getPromotionId());
+          ackPromotion.setTxId(p.getTxId());
+          ackPromotion.setData(data);
+          ackRequest.getPromotions().add(ackPromotion);
         }
-
-        // relax-[promotionId]:promoCode
-        String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
-        if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
-          campaignExtRef += p.getPromoCode();
-        }
-        String freespinsId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
-
-
-        AckPromotion ackPromotion = new AckPromotion();
-        AckPromotionData data = new AckPromotionData();
-        data.setChannel(request.getChannel());
-        data.setFreespinsId(freespinsId);
-        ackPromotion.setPlayerId(response.getPlayerId());
-        ackPromotion.setPromotionId(p.getPromotionId());
-        ackPromotion.setTxId(p.getTxId());
-        ackPromotion.setData(data);
-        ackRequest.getPromotions().add(ackPromotion);
       }
     }
 

@@ -22,7 +22,7 @@ public class Promotion {
 
   // optional
 
-  @JsonProperty("promotionstype")
+  @JsonProperty("promotiontype")
   private String promotionType;
 
   @JsonProperty("promotionid")
