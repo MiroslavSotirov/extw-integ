@@ -25,6 +25,7 @@ import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
 import com.dashur.integration.extw.Service;
 import com.dashur.integration.extw.connectors.ConnectorServiceLocator;
+/*
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.GameInfo;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.Credentials;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.ServiceRequest;
@@ -42,6 +43,15 @@ import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetFreeRo
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetFreeRoundsResponse;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.CancelFreeRoundsRequest;
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.CancelFreeRoundsResponse;
+import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenRequest;
+import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenResponse;
+import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionAddRequest;
+import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionAddResponse;
+import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionData;
+import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotion;
+*/
+import com.dashur.integration.extw.connectors.relaxgaming.data.service.*;
+import com.dashur.integration.extw.connectors.relaxgaming.data.*;
 import com.dashur.integration.extw.rgs.RgsService;
 import com.dashur.integration.extw.rgs.RgsServiceProvider;
 import com.dashur.integration.extw.rgs.data.GameHash;
@@ -492,6 +502,7 @@ public class RelaxGamingController {
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
 
+/*
       CampaignModel campaign = null;
 
       RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
@@ -544,6 +555,15 @@ public class RelaxGamingController {
       create.setStartTime(now.getTime());
 
       campaign = domainService.createCampaign(ctx, create);
+*/
+      CampaignModel campaign = createCampaign(ctx,
+        campaignExtRef,
+        currency,
+        itemId,
+        request.getFreespinValue(),
+        RelaxGamingConnectorServiceImpl.Utils.toDate(request.getExpires()),
+        request.getAmount(),
+        setting.getCompanyId());
 
       if (Objects.isNull(campaign)) {
         throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
@@ -888,6 +908,61 @@ public class RelaxGamingController {
                 setting.getLauncherAppApiId(), 
                 setting.getLauncherAppApiCredential()));
 
+
+    List<Long> campaignIds = null;
+    if (!isDemo) {
+      try {
+        RelaxGamingConnectorServiceImpl connector = (RelaxGamingConnectorServiceImpl)connectorLocator
+            .getConnector(RelaxGamingConfiguration.OPERATOR_CODE);
+
+        RelaxGamingClientService clientService = getClientService(setting.getCompanyId());
+
+        if (Objects.isNull(clientService)) {
+          log.info("could not aquire a connector service for calling verifytoken");
+        } else {
+          VerifyTokenRequest operatorReq = new VerifyTokenRequest();
+          operatorReq.setChannel(channel);
+          operatorReq.setClientId(clientId);
+          operatorReq.setToken(token);
+          operatorReq.setGameRef(gameId);
+          operatorReq.setPartnerId(setting.getPartnerId());
+          operatorReq.setIp(callerIp);
+          String auth = setting.getOperatorCredential();
+          javax.ws.rs.core.Response res = clientService.verifyToken(auth, setting.getPartnerId(), operatorReq);
+          if (!RelaxGamingConnectorServiceImpl.Utils.isSuccess(res.getStatus())) {
+            log.error("verifytoken request error. Skip checking promotions and launch anyway.");
+          } else {
+            VerifyTokenResponse operatorRes = res.readEntity(VerifyTokenResponse.class);
+            if (Objects.isNull(operatorRes)) {
+              log.error("Could not read VerifyTokenResponse. Skip checking promotions and launch anyway.");
+            } else {
+              // ubo promotions test code
+              /*
+              List<Promotion> promotions = new ArrayList<Promotion>();
+              Promotion p = new Promotion();
+              p.setPromotionType("freerounds");
+              p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
+              p.setTxId(UUID.randomUUID().toString());
+              p.setPlayerId(vtres.getPlayerId());
+              p.setPartnerId(vtres.getPartnerId());
+              p.setGameRef(req.getGameRef());
+              p.setAmount(10);
+              p.setFreespinValue(100L);
+              p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+              p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
+              promotions.add(p);
+              log.info("adding test promotion {}", p);
+              operatorRes.setPromotions(promotions);
+              */              
+              campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
+            }
+          }
+        }
+      } catch(Exception e) {
+        log.error("Ignoring exception while processing promotions", e);
+      }
+    }
+
     String url;
     RestResponseWrapperModel<String> result;
     try {
@@ -896,6 +971,7 @@ public class RelaxGamingController {
       if(!isDemo) rq.setToken(token);
       rq.setAppId(setting.getLauncherItemApplicationId());
       rq.setItemId(Long.parseLong(gameId));
+      rq.setCampaigns(campaignIds);
       rq.setExternal(Boolean.TRUE);
 
       Map<String, Object> confParams = Maps.newHashMap();
@@ -975,6 +1051,202 @@ public class RelaxGamingController {
       log.error("Unable to convert url to uri [{}]", url);
       throw new ApplicationException("Unable to convert url to uri");
     }
+  }
+
+  /**
+   * ackPromotions from verifytoken response before launch
+   * 
+   * @param companyId
+   * @param request
+   * @param response
+   * @return campaignId
+   */
+  private List<Long> ackPromotions(Long companyId, 
+    VerifyTokenRequest request, VerifyTokenResponse response) {
+    AckPromotionAddRequest ackRequest = null;
+    List<Long> campaignIds = null;
+
+    Long campaignId = null;
+    String currency = response.getCurrency();
+
+    if (Objects.nonNull(response.getPromotions())) {
+      for (Promotion p : response.getPromotions()) {
+        if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
+          p.getGameRef() == request.getGameRef() &&
+          p.getPlayerId() == response.getPlayerId()) {     
+
+          if (Objects.isNull(ackRequest)) {
+            ackRequest = new AckPromotionAddRequest();
+            ackRequest.setPromotions(new ArrayList<AckPromotion>());
+          }
+          if (Objects.isNull(campaignIds)) {
+            campaignIds = new ArrayList<Long>();
+          }
+
+          // relax-[promotionId]:promoCode
+          String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
+          if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
+            campaignExtRef += p.getPromoCode();
+          }
+          campaignId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
+          campaignIds.add(campaignId);
+
+          AckPromotion ackPromotion = new AckPromotion();
+          AckPromotionData data = new AckPromotionData();
+          data.setChannel(request.getChannel());
+          data.setFreespinsId(campaignId.toString());
+          ackPromotion.setPlayerId(response.getPlayerId());
+          ackPromotion.setPromotionId(p.getPromotionId());
+          ackPromotion.setTxId(p.getTxId());
+          ackPromotion.setData(data);
+          ackRequest.getPromotions().add(ackPromotion);
+        }
+      }
+    }
+
+    if (Objects.nonNull(ackRequest)) {
+      RelaxGamingConfiguration.CompanySetting setting = 
+          relaxConfig.getCompanySettings().get(companyId);
+      String auth = setting.getOperatorCredential();
+      Integer partnerId = setting.getPartnerId();
+      getClientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
+    }
+    return campaignIds;
+  }  
+
+  /**
+   * createOrJoinCampaign
+   * 
+   * @param companyId
+   * @param campaignExtRef
+   * @param currency
+   * @param promotion
+   * @return campaignId
+   */
+  private Long createOrJoinCampaign(Long companyId, 
+    String campaignExtRef, String currency, Promotion promotion) {
+    RelaxGamingConfiguration.CompanySetting setting = 
+        relaxConfig.getCompanySettings().get(companyId);
+
+    RequestContext ctx = RequestContext.instance();
+    ctx = ctx.withAccessToken(
+      commonService.companyAppAccessToken(
+          ctx,
+          setting.getLauncherAppClientId(),
+          setting.getLauncherAppClientCredential(),
+          setting.getLauncherAppApiId(),
+          setting.getLauncherAppApiCredential()));
+
+    CampaignModel campaign = null;
+    try {
+      campaign = domainService.searchCampaign(ctx, campaignExtRef);
+    } catch (Exception e) {
+      // do nothing
+    }
+
+    if (Objects.isNull(campaign)) {
+      campaign = createCampaign(ctx,
+        campaignExtRef,
+        currency,
+        RelaxGamingConnectorServiceImpl.Utils.getItemId(promotion.getGameRef()),
+        promotion.getFreespinValue(),
+        RelaxGamingConnectorServiceImpl.Utils.toDate(promotion.getExpires()),
+        promotion.getAmount(),
+        setting.getCompanyId());
+    }
+
+    if (Objects.isNull(campaign)) {
+      throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
+    }
+
+    SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, promotion.getPlayerId().toString());
+    if (Objects.isNull(memberAccount)) {
+      throw new EntityNotExistException("User with ext-ref [%d] does not exists", promotion.getPlayerId());
+    }
+
+    domainService.addCampaignMembers(
+        ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+
+    return campaign.getId();
+  }
+
+
+  /**
+   * create campaign
+   * 
+   * @param ctx
+   * @param campaignExtRef
+   * @param currency
+   * @param itemId
+   * @param betAmount
+   * @param expires
+   * @param numGames
+   * @param accountId
+   * @return campaign
+   */
+  private CampaignModel createCampaign(
+    RequestContext ctx,
+    String campaignExtRef,
+    String currency,
+    Long itemId,
+    Long betAmount,
+    Date expires,
+    Integer numGames,
+    Long accountId) {
+
+    RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
+      CommonUtils.authorizationBearer(ctx.getAccessToken()),
+      ctx.getTimezone(),
+      ctx.getCurrency(),
+      ctx.getUuid().toString(),
+      ctx.getLanguage(),
+      itemId);
+    if (!currencyResp.getData().contains(RelaxGamingConfiguration.DEFAULT_CURRENCY)) {
+      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, RelaxGamingConfiguration.DEFAULT_CURRENCY);
+    }
+    if (!currencyResp.getData().contains(currency)) {
+      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
+    }
+
+    RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
+      CommonUtils.authorizationBearer(ctx.getAccessToken()),
+      ctx.getTimezone(),
+      ctx.getCurrency(),
+      ctx.getUuid().toString(),
+      ctx.getLanguage(),
+      itemId,
+      RelaxGamingConfiguration.DEFAULT_CURRENCY);
+
+    int level = 1;
+    for (BigDecimal amount : betlevelResp.getData().getLevels()) {
+      if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == betAmount) {
+        break;
+      }
+      level++;
+    }
+    if (level >= betlevelResp.getData().getLevels().size()) {
+      throw new ValidationException("bet amount of %f is not a valid level: %s", 
+        (double)betAmount/100.0, 
+        betlevelResp.getData().getLevels().toString());
+    }
+
+    Calendar now = Calendar.getInstance();
+    now.add(Calendar.SECOND, 1);
+
+    CampaignCreateModel create = new CampaignCreateModel();
+    create.setEndTime(expires);
+    create.setGameId(itemId);
+    create.setName(campaignExtRef);
+    create.setNumOfGames(numGames);
+    create.setExtRef(campaignExtRef);
+    create.setAccountId(accountId);
+    create.setStatus(CampaignCreateModel.Status.ACTIVE);
+    create.setType(CampaignCreateModel.Type.FREE_GAMES);
+    create.setBetLevel(level);
+    create.setCurrency(currency);
+    create.setStartTime(now.getTime());
+
+    return domainService.createCampaign(ctx, create);
   }
 
   /**
@@ -1087,6 +1359,21 @@ public class RelaxGamingController {
    */
   private String getPrefixedRoundId(String roundId) {
     return RelaxGamingConfiguration.ROUND_PREFIX + roundId;
+  }
+
+  /**
+   * getClientService
+   * 
+   * @param companyId
+   * @return RelaxGamingClientService
+   */
+  private RelaxGamingClientService getClientService(Long companyId) {
+    RelaxGamingConnectorServiceImpl connector = (RelaxGamingConnectorServiceImpl)connectorLocator.getConnector(
+      RelaxGamingConfiguration.OPERATOR_CODE);
+    if (Objects.isNull(connector)) {
+      return null;
+    }
+    return connector.clientService(companyId);
   }
 
   /**

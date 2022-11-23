@@ -194,34 +194,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   public VerifyTokenResponse verifyToken(Long companyId, VerifyTokenRequest req, javax.ws.rs.core.Response res) {
     if (Utils.isSuccess(res.getStatus())) {
-      VerifyTokenResponse vtres = readResponse(res, VerifyTokenResponse.class);
-      try {
-        // ubo promotions test code
-        /*
-        List<Promotion> promotions = new ArrayList<Promotion>();
-        Promotion p = new Promotion();
-        p.setPromotionType("freerounds");
-        p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
-        p.setTxId(UUID.randomUUID().toString());
-        p.setPlayerId(vtres.getPlayerId());
-        p.setPartnerId(vtres.getPartnerId());
-        p.setGameRef(req.getGameRef());
-        p.setAmount(10);
-        p.setFreespinValue(100L);
-        p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
-        p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
-        promotions.add(p);
-        log.info("adding test promotion {}", p);
-        vtres.setPromotions(promotions);
-        */
-        ackPromotions(companyId, req, vtres);
-      } catch (WebApplicationException ex) {
-        log.error("ignoring WebApplicationException while ack'ing promotions", ex);
-        ex.getResponse().close();
-      } catch (Exception e) {
-        log.error("ignoring Exception while ack'ing promotions", e);
-      }
-      return vtres;
+      return readResponse(res, VerifyTokenResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
   }
@@ -328,7 +301,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   }
 
   /** Retrieve clientService based on company id */
-  private RelaxGamingClientService clientService(Long companyId) {
+  public RelaxGamingClientService clientService(Long companyId) {
     RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
 
     if (clientServices.containsKey(setting.getCompanyId())) {
@@ -349,154 +322,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       throw new ApplicationException("Unable to create client service.");
     }
   }
-
-
-  /**
-   * ackPromotions
-   * 
-   */
-  private void ackPromotions(Long companyId, 
-    VerifyTokenRequest request, VerifyTokenResponse response) {
-    AckPromotionAddRequest ackRequest = null;
-
-    String currency = response.getCurrency();
-
-    if (Objects.nonNull(response.getPromotions())) {
-      for (Promotion p : response.getPromotions()) {
-        if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
-          p.getGameRef() == request.getGameRef() &&
-          p.getPlayerId() == response.getPlayerId()) {     
-
-          if (Objects.isNull(ackRequest)) {
-            ackRequest = new AckPromotionAddRequest();
-            ackRequest.setPromotions(new ArrayList<AckPromotion>());
-          }
-
-          // relax-[promotionId]:promoCode
-          String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
-          if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
-            campaignExtRef += p.getPromoCode();
-          }
-          String freespinsId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
-
-
-          AckPromotion ackPromotion = new AckPromotion();
-          AckPromotionData data = new AckPromotionData();
-          data.setChannel(request.getChannel());
-          data.setFreespinsId(freespinsId);
-          ackPromotion.setPlayerId(response.getPlayerId());
-          ackPromotion.setPromotionId(p.getPromotionId());
-          ackPromotion.setTxId(p.getTxId());
-          ackPromotion.setData(data);
-          ackRequest.getPromotions().add(ackPromotion);
-        }
-      }
-    }
-
-    if (Objects.nonNull(ackRequest)) {
-      RelaxGamingConfiguration.CompanySetting setting = 
-          relaxConfig.getCompanySettings().get(companyId);
-      String auth = setting.getOperatorCredential();
-      Integer partnerId = setting.getPartnerId();
-      clientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
-    }
-  }
-
-  private String createOrJoinCampaign(Long companyId, 
-    String campaignExtRef, String currency, Promotion promotion) {
-    RelaxGamingConfiguration.CompanySetting setting = 
-        relaxConfig.getCompanySettings().get(companyId);
-
-    RequestContext ctx = RequestContext.instance();
-    ctx = ctx.withAccessToken(
-      commonService.companyAppAccessToken(
-          ctx,
-          setting.getLauncherAppClientId(),
-          setting.getLauncherAppClientCredential(),
-          setting.getLauncherAppApiId(),
-          setting.getLauncherAppApiCredential()));
-
-    CampaignModel campaign = null;
-    try {
-      campaign = domainService.searchCampaign(ctx, campaignExtRef);
-    } catch (Exception e) {
-      // do nothing
-    }
-
-    if (Objects.isNull(campaign)) {
-
-      Long itemId = Utils.getItemId(promotion.getGameRef());
-
-      RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
-        CommonUtils.authorizationBearer(ctx.getAccessToken()),
-        ctx.getTimezone(),
-        ctx.getCurrency(),
-        ctx.getUuid().toString(),
-        ctx.getLanguage(),
-        itemId);
-      if (!currencyResp.getData().contains(RelaxGamingConfiguration.DEFAULT_CURRENCY)) {
-        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, RelaxGamingConfiguration.DEFAULT_CURRENCY);
-      }
-      if (!currencyResp.getData().contains(currency)) {
-        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
-      }
-
-      RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
-        CommonUtils.authorizationBearer(ctx.getAccessToken()),
-        ctx.getTimezone(),
-        ctx.getCurrency(),
-        ctx.getUuid().toString(),
-        ctx.getLanguage(),
-        itemId,
-        RelaxGamingConfiguration.DEFAULT_CURRENCY);
-
-      int level = 1;
-      for (BigDecimal amount : betlevelResp.getData().getLevels()) {
-        if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == promotion.getFreespinValue()) {
-          break;
-        }
-        level++;
-      }
-      if (level >= betlevelResp.getData().getLevels().size()) {
-        throw new ValidationException("bet amount of %f is not a valid level: %s", 
-          (double)promotion.getFreespinValue()/100.0, 
-          betlevelResp.getData().getLevels().toString());
-      }
-
-      Calendar now = Calendar.getInstance();
-      now.add(Calendar.MINUTE, 1);
-
-      CampaignCreateModel create = new CampaignCreateModel();
-      create.setEndTime(Utils.toDate(promotion.getExpires()));
-      create.setGameId(itemId);
-      create.setName(campaignExtRef);
-      create.setNumOfGames(promotion.getAmount());
-      create.setExtRef(campaignExtRef);
-      create.setAccountId(setting.getCompanyId());
-      create.setStatus(CampaignCreateModel.Status.ACTIVE);
-      create.setType(CampaignCreateModel.Type.FREE_GAMES);
-      create.setBetLevel(level);
-      create.setCurrency(currency);
-      create.setStartTime(now.getTime());
-
-      campaign = domainService.createCampaign(ctx, create);
-    }
-
-    if (Objects.isNull(campaign)) {
-      throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
-    }
-
-    SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, promotion.getPlayerId().toString());
-    if (Objects.isNull(memberAccount)) {
-      throw new EntityNotExistException("User with ext-ref [%d] does not exists", promotion.getPlayerId());
-    }
-
-    domainService.addCampaignMembers(
-        ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
-
-    return campaign.getId().toString();
-  }
-
 
   /** Utility classes */
   static final class Utils {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Map;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,9 @@ public class SimplifyLauncherItemModel {
 
   @JsonProperty("item_id")
   private Long itemId;
+
+  @JsonProperty("campaigns")
+  private List<Long> campaigns;
 
   @JsonProperty("demo")
   private Boolean demo;
