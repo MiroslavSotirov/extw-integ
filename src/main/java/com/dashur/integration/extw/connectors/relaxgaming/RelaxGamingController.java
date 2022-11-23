@@ -926,7 +926,7 @@ public class RelaxGamingController {
           operatorReq.setChannel(channel);
           operatorReq.setClientId(clientId);
           operatorReq.setToken(token);
-          operatorReq.setGameRef(gameId);
+          operatorReq.setGameRef(getGameRef(gameId));
           operatorReq.setPartnerId(setting.getPartnerId());
           operatorReq.setIp(callerIp);
           String auth = setting.getOperatorCredential();
