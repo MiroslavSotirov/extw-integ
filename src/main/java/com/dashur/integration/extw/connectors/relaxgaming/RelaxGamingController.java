@@ -1237,7 +1237,7 @@ public class RelaxGamingController {
     }
 
     Calendar now = Calendar.getInstance();
-    now.add(Calendar.SECOND, 1);
+    now.add(Calendar.SECOND, 3);
 
     CampaignCreateModel create = new CampaignCreateModel();
     create.setEndTime(expires);
