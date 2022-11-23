@@ -71,10 +71,12 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Date;
 import java.util.UUID;
+import java.util.Random;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.time.ZoneOffset;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.math.BigDecimal;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -937,23 +939,21 @@ public class RelaxGamingController {
               log.error("Could not read VerifyTokenResponse. Skip checking promotions and launch anyway.");
             } else {
               // ubo promotions test code
-              /*
               List<Promotion> promotions = new ArrayList<Promotion>();
               Promotion p = new Promotion();
               p.setPromotionType("freerounds");
               p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
               p.setTxId(UUID.randomUUID().toString());
-              p.setPlayerId(vtres.getPlayerId());
-              p.setPartnerId(vtres.getPartnerId());
-              p.setGameRef(req.getGameRef());
-              p.setAmount(10);
+              p.setPlayerId(operatorRes.getPlayerId());
+              p.setPartnerId(operatorRes.getPartnerId());
+              p.setGameRef(operatorReq.getGameRef());
+              p.setAmount(5);
               p.setFreespinValue(100L);
               p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
               p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
               promotions.add(p);
               log.info("adding test promotion {}", p);
               operatorRes.setPromotions(promotions);
-              */              
               campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
             }
           }
@@ -1109,7 +1109,7 @@ public class RelaxGamingController {
           relaxConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
-      getClientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
+//      getClientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
     }
     return campaignIds;
   }  
