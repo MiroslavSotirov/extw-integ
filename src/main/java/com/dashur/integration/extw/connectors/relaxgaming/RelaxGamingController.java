@@ -561,6 +561,7 @@ public class RelaxGamingController {
       CampaignModel campaign = createCampaign(ctx,
         campaignExtRef,
         currency,
+        currency,
         itemId,
         request.getFreespinValue(),
         RelaxGamingConnectorServiceImpl.Utils.toDate(request.getExpires()),
@@ -1149,6 +1150,7 @@ public class RelaxGamingController {
     if (Objects.isNull(campaign)) {
       campaign = createCampaign(ctx,
         campaignExtRef,
+        RelaxGamingConfiguration.DEFAULT_CURRENCY,
         currency,
         RelaxGamingConnectorServiceImpl.Utils.getItemId(promotion.getGameRef()),
         promotion.getFreespinValue(),
@@ -1178,7 +1180,8 @@ public class RelaxGamingController {
    * 
    * @param ctx
    * @param campaignExtRef
-   * @param currency
+   * @param requestCurrency
+   * @param campaignCurrency
    * @param itemId
    * @param betAmount
    * @param expires
@@ -1189,7 +1192,8 @@ public class RelaxGamingController {
   private CampaignModel createCampaign(
     RequestContext ctx,
     String campaignExtRef,
-    String currency,
+    String requestCurrency,
+    String campaignCurrency,
     Long itemId,
     Long betAmount,
     Date expires,
@@ -1203,11 +1207,11 @@ public class RelaxGamingController {
       ctx.getUuid().toString(),
       ctx.getLanguage(),
       itemId);
-    if (!currencyResp.getData().contains(RelaxGamingConfiguration.DEFAULT_CURRENCY)) {
-      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, RelaxGamingConfiguration.DEFAULT_CURRENCY);
+    if (!currencyResp.getData().contains(requestCurrency)) {
+      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, requestCurrency);
     }
-    if (!currencyResp.getData().contains(currency)) {
-      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
+    if (!currencyResp.getData().contains(campaignCurrency)) {
+      throw new ValidationException("game %s does not accept %s as campaign currency", itemId, campaignCurrency);
     }
 
     RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
@@ -1217,7 +1221,7 @@ public class RelaxGamingController {
       ctx.getUuid().toString(),
       ctx.getLanguage(),
       itemId,
-      RelaxGamingConfiguration.DEFAULT_CURRENCY);
+      requestCurrency);
 
     int level = 1;
     for (BigDecimal amount : betlevelResp.getData().getLevels()) {
@@ -1245,7 +1249,7 @@ public class RelaxGamingController {
     create.setStatus(CampaignCreateModel.Status.ACTIVE);
     create.setType(CampaignCreateModel.Type.FREE_GAMES);
     create.setBetLevel(level);
-    create.setCurrency(currency);
+    create.setCurrency(campaignCurrency);
     create.setStartTime(now.getTime());
 
     return domainService.createCampaign(ctx, create);
