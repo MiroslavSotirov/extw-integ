@@ -585,12 +585,12 @@ public class RelaxGamingController {
       }
       */
 
+      /*
       SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
       if (Objects.isNull(memberAccount)) {
         throw new EntityNotExistException("User with ext-ref [%d] does not exists", request.getPlayerId());
       }
 
-      /*
       domainService.addCampaignMembers(
           ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
       */
@@ -1162,7 +1162,7 @@ public class RelaxGamingController {
     if (Objects.isNull(campaign)) {
       throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
     }
-
+/*
     SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, promotion.getPlayerId().toString());
     if (Objects.isNull(memberAccount)) {
       throw new EntityNotExistException("User with ext-ref [%d] does not exists", promotion.getPlayerId());
@@ -1170,6 +1170,10 @@ public class RelaxGamingController {
 
     domainService.addCampaignMembers(
         ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+*/
+    domainService.addCampaignMembers(
+        ctx, campaign.getId(), Lists.newArrayList(promotion.getPlayerId().toString()));
+
 
     return campaign.getId();
   }
