@@ -504,60 +504,45 @@ public class RelaxGamingController {
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
 
-/*
-      CampaignModel campaign = null;
-
-      RestResponseWrapperModel<List<String>> currencyResp = campaignClientService.currency(
-        CommonUtils.authorizationBearer(ctx.getAccessToken()),
-        ctx.getTimezone(),
-        ctx.getCurrency(),
-        ctx.getUuid().toString(),
-        ctx.getLanguage(),
-        itemId);
-      if (!currencyResp.getData().contains(currency)) {
-        throw new ValidationException("game %s does not accept %s as campaign currency", itemId, currency);
+      SimpleAccountModel memberAccount = null;
+      try  {
+        memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
+      } catch(EntityNotExistException e) {
       }
 
-      RestResponseWrapperModel<CampaignBetLevelModel> betlevelResp = campaignClientService.betLevel(
-        CommonUtils.authorizationBearer(ctx.getAccessToken()),
-        ctx.getTimezone(),
-        ctx.getCurrency(),
-        ctx.getUuid().toString(),
-        ctx.getLanguage(),
-        itemId,
-        currency);
+      if (Objects.nonNull(memberAccount)) {
 
-      int level = 1;
-      for (BigDecimal amount : betlevelResp.getData().getLevels()) {
-        if (amount.multiply(BigDecimal.valueOf(100L)).longValue() == request.getFreespinValue()) {
-          break;
+        List<CampaignModel> campaigns = null;
+        try {
+          campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
+        } catch (EntityNotExistException e) {
+          // don't do anything.
         }
-        level++;
+
+
+        if (Objects.nonNull(campaigns)) {
+          for (CampaignModel m : campaigns) {
+
+            Integer remaining = m.getNumOfGames();
+            if (m.getMetaData().containsKey("spins_count")) {
+              Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
+              if (spinsCount.containsKey("remaining")) {
+                remaining = (Integer)spinsCount.get("remaining");
+              }
+            }
+
+            if (m.getGameId() == itemId && 
+              m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX) &&
+              m.getStatus() == CampaignModel.Status.ACTIVE && remaining > 0) {
+              
+              throw new ValidationException(
+                "A campaign for this game and player already exists"
+              );
+            }
+          }
+        }
       }
-      if (level >= betlevelResp.getData().getLevels().size()) {
-        throw new ValidationException("bet amount of %f is not a valid level: %s", 
-          (double)request.getFreespinValue()/100.0, 
-          betlevelResp.getData().getLevels().toString());
-      }
 
-      Calendar now = Calendar.getInstance();
-      now.add(Calendar.MINUTE, 1);
-
-      CampaignCreateModel create = new CampaignCreateModel();
-      create.setEndTime(RelaxGamingConnectorServiceImpl.Utils.toDate(request.getExpires()));
-      create.setGameId(itemId);
-      create.setName(campaignExtRef);
-      create.setNumOfGames(request.getAmount());
-      create.setExtRef(campaignExtRef);
-      create.setAccountId(setting.getCompanyId());
-      create.setStatus(CampaignCreateModel.Status.ACTIVE);
-      create.setType(CampaignCreateModel.Type.FREE_GAMES);
-      create.setBetLevel(level);
-      create.setCurrency(currency);
-      create.setStartTime(now.getTime());
-
-      campaign = domainService.createCampaign(ctx, create);
-*/
       CampaignModel campaign = createCampaign(ctx,
         campaignExtRef,
         currency,
@@ -572,28 +557,6 @@ public class RelaxGamingController {
         throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
       }
 
-      /*
-      if (Objects.isNull(campaign.getVendorRef())) {
-        log.info("Campaign setup is not ready. Please try again later");
-        AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
-        resp.setFreespinsId(campaign.getId().toString());
-        return Response.serverError()
-            .type(MediaType.APPLICATION_JSON)
-            .encoding("utf-8")
-            .entity(resp)
-            .build();
-      }
-      */
-
-      /*
-      SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
-      if (Objects.isNull(memberAccount)) {
-        throw new EntityNotExistException("User with ext-ref [%d] does not exists", request.getPlayerId());
-      }
-
-      domainService.addCampaignMembers(
-          ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
-      */
       CampaignAssignmentModel assignMember = new CampaignAssignmentModel();
       assignMember.setAccountExtRef(request.getPlayerId().toString());
       assignMember.setCampaignId(campaign.getId());
