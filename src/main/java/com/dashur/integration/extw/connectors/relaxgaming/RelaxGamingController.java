@@ -512,6 +512,11 @@ public class RelaxGamingController {
 
       if (Objects.nonNull(memberAccount)) {
 
+        log.debug(
+          "member with ext ref {} has account id {}",
+          request.getPlayerId().toString(),
+          memberAccount.getId()
+        );
         List<CampaignModel> campaigns = null;
         try {
           campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
@@ -521,23 +526,35 @@ public class RelaxGamingController {
 
 
         if (Objects.nonNull(campaigns)) {
+
+          log.debug("account has available campaigns");
           for (CampaignModel m : campaigns) {
 
-            Integer remaining = m.getNumOfGames();
-            if (m.getMetaData().containsKey("spins_count")) {
-              Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
-              if (spinsCount.containsKey("remaining")) {
-                remaining = (Integer)spinsCount.get("remaining");
-              }
-            }
-
-            if (m.getGameId() == itemId && 
+            log.debug(
+              "gameid: {} name: {} status: {}", 
+              m.getGameId(),
+              m.getName(),
+              m.getStatus()
+            );
+            if (m.getGameId() == itemId &&
               m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX) &&
-              m.getStatus() == CampaignModel.Status.ACTIVE && remaining > 0) {
-              
-              throw new ValidationException(
-                "A campaign for this game and player already exists"
-              );
+              m.getStatus() == CampaignModel.Status.ACTIVE) {
+
+              Integer remaining = m.getNumOfGames();
+              if (m.getMetaData().containsKey("spins_count")) {
+                Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
+                if (spinsCount.containsKey("remaining")) {
+                  remaining = (Integer)spinsCount.get("remaining");
+                }
+              }
+              log.debug("remaining spins: {}", remaining);
+              if (remaining > 0) {
+
+                log.debug("only one campaign can be active for player and game combination");
+                throw new ValidationException(
+                  "A campaign exists for this player and game"
+                );
+              }
             }
           }
         }
