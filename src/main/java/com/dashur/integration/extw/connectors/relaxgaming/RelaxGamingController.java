@@ -512,11 +512,6 @@ public class RelaxGamingController {
 
       if (Objects.nonNull(memberAccount)) {
 
-        log.debug(
-          "member with ext ref {} has account id {}",
-          request.getPlayerId().toString(),
-          memberAccount.getId()
-        );
         List<CampaignModel> campaigns = null;
         try {
           campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
@@ -527,21 +522,12 @@ public class RelaxGamingController {
 
         if (Objects.nonNull(campaigns)) {
 
-          log.debug("account has available campaigns");
           for (CampaignModel m : campaigns) {
 
-            log.debug(
-              "gameid: {} name: {} status: {}", 
-              m.getGameId(),
-              m.getName(),
-              m.getStatus()
-            );
             if (m.getGameId().equals(itemId)) {
 
-                log.debug("campaign exists for game [{}]", itemId);
                 if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
-                  log.debug("[{}] is a relax gaming campaign", m.getName());
                   if (m.getStatus().equals(CampaignModel.Status.ACTIVE)) {
 
                   Integer remaining = m.getNumOfGames();
@@ -552,13 +538,14 @@ public class RelaxGamingController {
                       remaining = (Integer)spinsCount.get("remaining");
                     }
                   }
-                  log.debug("remaining spins: {}", remaining);
                   if (remaining > 0) {
 
-                    log.debug("only one campaign can be active for player and game combination");
-                    throw new ValidationException(
-                      "A campaign exists for this player and game"
-                    );
+                    log.error("only one campaign can be active for player and game combination");
+                    return Response.status(Response.Status.FORBIDDEN)
+                        .type(MediaType.APPLICATION_JSON)
+                        .encoding("utf-8")
+                        .entity("A campaign exists for this player and game")
+                        .build();
                   }
                 }
               }
