@@ -536,7 +536,7 @@ public class RelaxGamingController {
               m.getName(),
               m.getStatus()
             );
-            if (m.getGameId() == itemId) {
+            if (m.getGameId().equals(itemId)) {
 
                 log.debug("campaign exists for game [{}]", itemId);
                 if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
