@@ -536,24 +536,31 @@ public class RelaxGamingController {
               m.getName(),
               m.getStatus()
             );
-            if (m.getGameId() == itemId &&
-              m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX) &&
-              m.getStatus() == CampaignModel.Status.ACTIVE) {
+            if (m.getGameId() == itemId) {
 
-              Integer remaining = m.getNumOfGames();
-              if (m.getMetaData().containsKey("spins_count")) {
-                Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
-                if (spinsCount.containsKey("remaining")) {
-                  remaining = (Integer)spinsCount.get("remaining");
+                log.debug("campaign exists for game [{}]", itemId);
+                if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
+
+                  log.debug("[{}] is a relax gaming campaign", m.getName());
+                  if (m.getStatus().equals(CampaignModel.Status.ACTIVE)) {
+
+                  Integer remaining = m.getNumOfGames();
+                  log.debug("campaign is active with an initial amount of {} spins", remaining);
+                  if (m.getMetaData().containsKey("spins_count")) {
+                    Map<String, Object> spinsCount = (Map<String,Object>)m.getMetaData().get("spins_count");
+                    if (spinsCount.containsKey("remaining")) {
+                      remaining = (Integer)spinsCount.get("remaining");
+                    }
+                  }
+                  log.debug("remaining spins: {}", remaining);
+                  if (remaining > 0) {
+
+                    log.debug("only one campaign can be active for player and game combination");
+                    throw new ValidationException(
+                      "A campaign exists for this player and game"
+                    );
+                  }
                 }
-              }
-              log.debug("remaining spins: {}", remaining);
-              if (remaining > 0) {
-
-                log.debug("only one campaign can be active for player and game combination");
-                throw new ValidationException(
-                  "A campaign exists for this player and game"
-                );
               }
             }
           }
@@ -657,7 +664,7 @@ public class RelaxGamingController {
             }
           }
 
-          if (m.getStatus() == CampaignModel.Status.ACTIVE && remaining > 0) {
+          if (m.getStatus().equals(CampaignModel.Status.ACTIVE) && remaining > 0) {
 
             if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
