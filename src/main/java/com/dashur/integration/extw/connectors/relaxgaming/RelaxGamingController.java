@@ -568,12 +568,27 @@ public class RelaxGamingController {
         throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
       }
 
-      CampaignAssignmentModel assignMember = new CampaignAssignmentModel();
-      assignMember.setAccountExtRef(request.getPlayerId().toString());
-      assignMember.setCampaignId(campaign.getId());
-      assignMember.setGameId(itemId);
-      domainService.assignCampaignMember(
-        ctx, assignMember);
+      try {
+        CampaignAssignmentModel assignMember = new CampaignAssignmentModel();
+        assignMember.setAccountExtRef(request.getPlayerId().toString());
+        assignMember.setCampaignId(campaign.getId());
+        assignMember.setGameId(itemId);
+        domainService.assignCampaignMember(
+          ctx, assignMember);
+      } catch (Exception ex) {
+        log.info("Could not assign unknown player. Use add campaign member method");
+        try {
+          domainService.addCampaignMembers(
+              ctx, campaign.getId(), Lists.newArrayList(request.getPlayerId().toString()));
+        } catch (Exception e) {
+          log.error("Could not add unknown player to campaign");
+          return Response.status(Response.Status.FORBIDDEN)
+              .type(MediaType.APPLICATION_JSON)
+              .encoding("utf-8")
+              .entity("Unknown player")
+              .build();
+        }
+      }
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
       resp.setTxId(request.getTxId());
