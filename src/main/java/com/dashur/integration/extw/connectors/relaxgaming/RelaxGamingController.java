@@ -438,6 +438,7 @@ public class RelaxGamingController {
     String partnerId = null;
     String currency = null;
     String campaignExtRef = null;
+    String accountExtRef = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
@@ -467,6 +468,7 @@ public class RelaxGamingController {
       if (!CommonUtils.isEmptyOrNull(request.getPromoCode())) {
         campaignExtRef += request.getPromoCode();
       }
+      accountExtRef = request.getPlayerId().toString();
 
       if (log.isDebugEnabled()) {
         log.debug(
@@ -478,7 +480,7 @@ public class RelaxGamingController {
             campaignExtRef);
       }
 
-      String cacheKey = getCampaignCacheKey(request.getPlayerId().toString(), itemId);
+      String cacheKey = getCampaignCacheKey(accountExtRef, itemId);
       if (Objects.nonNull(cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, cacheKey))) {
         log.error("player-campaign cache contains key [{}] already", cacheKey);
         return Response.status(Response.Status.FORBIDDEN)
@@ -499,7 +501,7 @@ public class RelaxGamingController {
 
       SimpleAccountModel memberAccount = null;
       try  {
-        memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
+        memberAccount = domainService.getAccountByExtRef(ctx, accountExtRef);
       } catch(EntityNotExistException e) {
       }
 
@@ -563,14 +565,14 @@ public class RelaxGamingController {
 
       try {
         CampaignAssignmentModel assignMember = new CampaignAssignmentModel();
-        assignMember.setAccountExtRef(request.getPlayerId().toString());
+        assignMember.setAccountExtRef(accountExtRef);
         assignMember.setCampaignId(campaign.getId());
         assignMember.setGameId(itemId);
         domainService.assignCampaignMember(
           ctx, assignMember);
       } catch (Exception ex) {
         log.info("Could not assign unknown player. Add it to campaign cache for assignment in the launcher api");
-        addCachedCampaign(request.getPlayerId().toString(), itemId, campaign.getId());
+        addCachedCampaign(accountExtRef, itemId, campaign.getId());
       }
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
@@ -596,6 +598,7 @@ public class RelaxGamingController {
     RequestContext ctx = RequestContext.instance();
     String campaignExtRef = null;
     String partnerId = null;
+    String accountExtRef = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
@@ -607,6 +610,7 @@ public class RelaxGamingController {
             request.getCredentials().getPartnerId(),
             request.getPlayerId());
       }
+      accountExtRef = request.getPlayerId().toString();
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
@@ -620,8 +624,14 @@ public class RelaxGamingController {
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
 
+      SimpleAccountModel memberAccount = null;
+      try {
+        memberAccount = domainService.getAccountByExtRef(ctx, accountExtRef);
+      } catch (EntityNotExistException e) {
+        log.debug("player with ext-ref [{}] is unknown", accountExtRef);
+      }
+
       List<CampaignModel> campaigns = null;
-      SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
       if (Objects.nonNull(memberAccount)) {
         try {
           campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
@@ -631,7 +641,7 @@ public class RelaxGamingController {
       }
 
       // check cache for campaigns
-      String cacheKey = DigestUtils.sha256Hex(request.getPlayerId().toString());
+      String cacheKey = DigestUtils.sha256Hex(accountExtRef);
       String cachedCampaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, cacheKey);
       if (!CommonUtils.isEmptyOrNull(cachedCampaigns)) {
         log.debug("cached campaigns found for this player [{}]", cachedCampaigns);
@@ -743,6 +753,7 @@ public class RelaxGamingController {
       @HeaderParam(RelaxGamingConfiguration.AUTHORIZATION) String auth, final CancelFreeRoundsRequest request) {
     RequestContext ctx = RequestContext.instance();
     String partnerId = null;
+    String accountExtRef = null;
 
     try {
       if (!authenticate(auth, request.getCredentials().getPartnerId())) {
@@ -755,7 +766,8 @@ public class RelaxGamingController {
             request.getCredentials().getPartnerId(),
             request.getFreespinsId(),
             request.getPlayerId());
-      }      
+      }
+      accountExtRef = request.getPlayerId().toString();
       partnerId = String.valueOf(request.getCredentials().getPartnerId());
       RelaxGamingConfiguration.CompanySetting setting =
           getCompanySettings(partnerId, true);
@@ -768,6 +780,7 @@ public class RelaxGamingController {
                   setting.getLauncherAppClientCredential(),
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
+
       CampaignModel campaign = null;
       try {
         RestResponseWrapperModel<CampaignModel> result = campaignClientService.get(
@@ -787,8 +800,7 @@ public class RelaxGamingController {
         throw new EntityNotExistException(
             "Campaign not exist, cannot cancel freespins. Please check.");
       }
-
-      removeCachedCampaign(request.getPlayerId().toString(), campaign.getGameId());
+      removeCachedCampaign(accountExtRef, campaign.getGameId());
 
 /*
       if (Objects.isNull(campaign.getVendorRef())) {
@@ -801,11 +813,13 @@ public class RelaxGamingController {
             .build();
       }
 */      
-      SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
-      if (Objects.isNull(memberAccount)) {
-        log.debug("User with ext-ref [{}] doe not exist", request.getPlayerId());
-      } else {
-
+      SimpleAccountModel memberAccount = null;
+      try {
+        memberAccount = domainService.getAccountByExtRef(ctx, accountExtRef);
+      } catch (EntityNotExistException e) {
+        log.debug("player with ext-ref [{}] is unknown", accountExtRef);        
+      }
+      if (Objects.nonNull(memberAccount)) {
         domainService.delCampaignMembers(
             ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
 
@@ -822,7 +836,7 @@ public class RelaxGamingController {
         update.setVersion(campaign.getVersion());
 
         domainService.updateCampaign(ctx, campaign.getId(), update);
-      }
+      } 
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
       resp.setFreespinsId(request.getFreespinsId());
@@ -973,20 +987,20 @@ public class RelaxGamingController {
               campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
 
               // check cache for campaigns that should be assigned
-              String playerExtRef = operatorRes.getPlayerId().toString();
-              String cacheKey = getCampaignCacheKey(playerExtRef, itemId);
+              String accountExtRef = operatorRes.getPlayerId().toString();
+              String cacheKey = getCampaignCacheKey(accountExtRef, itemId);
               Long cachedCampaign = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, cacheKey);
               if (Objects.isNull(cachedCampaign)) {
 
                 log.debug("player [{}] with key [{}] has no cached campaign for game [{}]", 
-                  playerExtRef, cacheKey, itemId);
+                  accountExtRef, cacheKey, itemId);
               } else {
 
                 log.debug("player [{}] with key [{}] has cached campaign [{}] for game [{}]", 
-                  playerExtRef, cacheKey, cachedCampaign, itemId);
+                  accountExtRef, cacheKey, cachedCampaign, itemId);
 
                 campaignIds.add(cachedCampaign);
-                removeCachedCampaign(playerExtRef, itemId);
+                removeCachedCampaign(accountExtRef, itemId);
               }
             }
           }
@@ -1407,33 +1421,33 @@ public class RelaxGamingController {
   /**
    * getCampaignCacheKey
    * 
-   * @param playerExtRef
+   * @param accountExtRef
    * @param itemId
    * @return cache key
    */
-  private String getCampaignCacheKey(String playerExtRef, Long itemId) {
-      return String.format("%s:%d", DigestUtils.sha256Hex(playerExtRef), itemId);
+  private String getCampaignCacheKey(String accountExtRef, Long itemId) {
+      return String.format("%s:%d", DigestUtils.sha256Hex(accountExtRef), itemId);
   }
 
-  private void addCachedCampaign(String playerExtRef, Long itemId, Long campaignId) {
-    String key = DigestUtils.sha256Hex(playerExtRef);
+  private void addCachedCampaign(String accountExtRef, Long itemId, Long campaignId) {
+    String key = DigestUtils.sha256Hex(accountExtRef);
     String campaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, key);
     cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns + "," + campaignId);
     cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, String.format("%s:%d", key, itemId), campaignId);
-    log.debug("player [{}] with key [{}] added campaign [{}] to [{}]", playerExtRef, key, campaignId, campaigns);
+    log.debug("player [{}] with key [{}] added campaign [{}] to [{}]", accountExtRef, key, campaignId, campaigns);
   }
 
-  private void removeCachedCampaign(String playerExtRef, Long itemId) {
-    String key = DigestUtils.sha256Hex(playerExtRef);
+  private void removeCachedCampaign(String accountExtRef, Long itemId) {
+    String key = DigestUtils.sha256Hex(accountExtRef);
     String campaignKey = String.format("%s:%d", key, itemId);
     String campaigns = "";
     Long campaignId = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, campaignKey);
     if (Objects.isNull(campaignId)) {
-      log.debug("player [{}] with key [{}] has no cached campaign for game [{}]", playerExtRef, key, itemId);
+      log.debug("player [{}] with key [{}] has no cached campaign for game [{}]", accountExtRef, key, itemId);
     } else {
       String cachedCampaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, key);
       if (CommonUtils.isEmptyOrNull(cachedCampaigns)) {
-        throw new ApplicationException("player [%s] with key [%s] cache is inconsistent", playerExtRef, key);
+        throw new ApplicationException("player [%s] with key [%s] cache is inconsistent", accountExtRef, key);
       } else {
         String campaignIdString = campaignId.toString();
         for (String c : cachedCampaigns.split(",")) {
@@ -1445,7 +1459,7 @@ public class RelaxGamingController {
           }
         }
         log.debug("player [{}] with key [{}] update campaign from [{}] to [{}]", 
-          playerExtRef, key, cachedCampaigns, campaigns);
+          accountExtRef, key, cachedCampaigns, campaigns);
         cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns);
       }
       cacheProvider.remove(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, campaignKey);
