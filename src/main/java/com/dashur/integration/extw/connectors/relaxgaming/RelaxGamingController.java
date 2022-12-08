@@ -999,6 +999,9 @@ public class RelaxGamingController {
                 log.debug("player [{}] with key [{}] has cached campaign [{}] for game [{}]", 
                   accountExtRef, cacheKey, cachedCampaign, itemId);
 
+                if (Objects.isNull(campaignIds)) {
+                  campaignIds = new ArrayList<Long>();
+                }
                 campaignIds.add(cachedCampaign);
                 removeCachedCampaign(accountExtRef, itemId);
               }
