@@ -26,6 +26,8 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
   static final String CONF_PARAMS_PREFIX = "ely__";
   static final String CAMPAIGN_PREFIX = OPERATOR_CODE + "-";
   static final String PROMO_PREFIX = "promo-";
+  static final String CACHE_NAME_PLAYER_CAMPAIGNS = "das-integ.cache.player-campaigns";
+  static final String CACHE_NAME_PLAYERGAME_CAMPAIGN = "das-integ.cache.playergame-campaign";
 
   private String operator;
 

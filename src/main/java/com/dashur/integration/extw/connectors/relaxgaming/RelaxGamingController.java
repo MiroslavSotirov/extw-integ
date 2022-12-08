@@ -21,35 +21,11 @@ import com.dashur.integration.commons.rest.model.SimplifyLauncherItemModel;
 import com.dashur.integration.commons.rest.model.CampaignAssignmentModel;
 import com.dashur.integration.commons.domain.DomainService;
 import com.dashur.integration.commons.domain.CommonService;
+import com.dashur.integration.commons.cache.CacheProvider;
 import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
 import com.dashur.integration.extw.Service;
 import com.dashur.integration.extw.connectors.ConnectorServiceLocator;
-/*
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GameInfo;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.Credentials;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.ServiceRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetGamesResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetReplayRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetReplayResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetStateRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetStateResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.FreeRound;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.FreeRoundsInfo;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.FeatureTriggerInfo;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.AddFreeRoundsRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.AddFreeRoundsResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetFreeRoundsRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.GetFreeRoundsResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.CancelFreeRoundsRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.service.CancelFreeRoundsResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.VerifyTokenResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionAddRequest;
-import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionAddResponse;
-import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotionData;
-import com.dashur.integration.extw.connectors.relaxgaming.data.AckPromotion;
-*/
 import com.dashur.integration.extw.connectors.relaxgaming.data.service.*;
 import com.dashur.integration.extw.connectors.relaxgaming.data.*;
 import com.dashur.integration.extw.rgs.RgsService;
@@ -95,6 +71,7 @@ import javax.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.apache.commons.codec.digest.DigestUtils;
 
 @Slf4j
 @Path("/v1/extw/exp/relaxgaming")
@@ -118,12 +95,18 @@ public class RelaxGamingController {
 
   @Inject @RestClient LauncherClientService launcherClientService;
 
+  @Inject CacheProvider cacheProvider;
 
   private RelaxGamingConfiguration relaxConfig;
 
   @PostConstruct
   public void init() {
     relaxConfig = config.configuration(RelaxGamingConfiguration.OPERATOR_CODE, RelaxGamingConfiguration.class);
+
+    cacheProvider.initCache(
+      RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, String.class, 10_000, 7 * 24 * 60);
+    cacheProvider.initCache(
+      RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, String.class, Long.class, 10_000, 7 * 24 * 60);
   }
 
   @GET
@@ -495,6 +478,16 @@ public class RelaxGamingController {
             campaignExtRef);
       }
 
+      String cacheKey = getCampaignCacheKey(request.getPlayerId().toString(), itemId);
+      if (Objects.nonNull(cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, cacheKey))) {
+        log.error("player-campaign cache contains key [{}] already", cacheKey);
+        return Response.status(Response.Status.FORBIDDEN)
+            .type(MediaType.APPLICATION_JSON)
+            .encoding("utf-8")
+            .entity("A campaign exists for this player and game")
+            .build();
+      }
+
       ctx =
           ctx.withAccessToken(
               commonService.companyAppAccessToken(
@@ -576,18 +569,8 @@ public class RelaxGamingController {
         domainService.assignCampaignMember(
           ctx, assignMember);
       } catch (Exception ex) {
-        log.info("Could not assign unknown player. Use add campaign member method");
-        try {
-          domainService.addCampaignMembers(
-              ctx, campaign.getId(), Lists.newArrayList(request.getPlayerId().toString()));
-        } catch (Exception e) {
-          log.error("Could not add unknown player to campaign");
-          return Response.status(Response.Status.FORBIDDEN)
-              .type(MediaType.APPLICATION_JSON)
-              .encoding("utf-8")
-              .entity("Unknown player")
-              .build();
-        }
+        log.info("Could not assign unknown player. Add it to campaign cache for assignment in the launcher api");
+        addCachedCampaign(request.getPlayerId().toString(), itemId, campaign.getId());
       }
 
       AddFreeRoundsResponse resp = new AddFreeRoundsResponse();
@@ -637,17 +620,53 @@ public class RelaxGamingController {
                   setting.getLauncherAppApiId(),
                   setting.getLauncherAppApiCredential()));
 
+      List<CampaignModel> campaigns = null;
       SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
-      if (Objects.isNull(memberAccount)) {
-        throw new EntityNotExistException("User with ext-ref [%d] does not exists", request.getPlayerId());
+      if (Objects.nonNull(memberAccount)) {
+        try {
+          campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
+        } catch (EntityNotExistException e) {
+          // don't do anything.
+        }        
       }
 
-      List<CampaignModel> campaigns = null;
-      try {
-        campaigns = domainService.availableCampaigns(ctx, memberAccount.getId(), true);
-      } catch (EntityNotExistException e) {
-        // don't do anything.
+      // check cache for campaigns
+      String cacheKey = DigestUtils.sha256Hex(request.getPlayerId().toString());
+      String cachedCampaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, cacheKey);
+      if (!CommonUtils.isEmptyOrNull(cachedCampaigns)) {
+        log.debug("cached campaigns found for this player [{}]", cachedCampaigns);
+        for (String s : cachedCampaigns.split(",")) {
+
+          try {
+            RestResponseWrapperModel<CampaignModel> result = campaignClientService.get(
+              CommonUtils.authorizationBearer(ctx.getAccessToken()),
+              ctx.getTimezone(),
+              ctx.getCurrency(),
+              ctx.getUuid().toString(),
+              ctx.getLanguage(),
+              s);
+            CampaignModel campaign = result.getData();
+            if (Objects.isNull(campaigns)) {
+              campaigns = new ArrayList<CampaignModel>();
+            }
+            boolean found = false;
+            for (CampaignModel c : campaigns) {
+              if (c.getId().equals(campaign.getId())) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              campaigns.add(campaign);
+            } else {
+              log.debug("campaign was already available [{}]", s);              
+            }
+          } catch (EntityNotExistException e) {
+            // don't do anything.
+          }
+        }
       }
+
 
       // avoid re-fetching bet levels in case of multiple campaigns
       Map<Long,CampaignBetLevelModel> betLevelMap = Maps.newHashMap();
@@ -768,6 +787,9 @@ public class RelaxGamingController {
         throw new EntityNotExistException(
             "Campaign not exist, cannot cancel freespins. Please check.");
       }
+
+      removeCachedCampaign(request.getPlayerId().toString(), campaign.getGameId());
+
 /*
       if (Objects.isNull(campaign.getVendorRef())) {
         CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
@@ -781,26 +803,26 @@ public class RelaxGamingController {
 */      
       SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, request.getPlayerId().toString());
       if (Objects.isNull(memberAccount)) {
-        throw new EntityNotExistException("User with ext-ref [%s] does not exists", request.getPlayerId());
+        log.debug("User with ext-ref [{}] doe not exist", request.getPlayerId());
+      } else {
+
+        domainService.delCampaignMembers(
+            ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
+
+        CampaignUpdateModel update = new CampaignUpdateModel();
+        update.setName(campaign.getName());
+        update.setNumOfGames(campaign.getNumOfGames());
+        update.setStatus(CampaignUpdateModel.Status.CLOSED);
+        update.setType(CampaignUpdateModel.Type.FREE_GAMES);
+        update.setGameId(campaign.getGameId());
+        update.setBetLevel(campaign.getBetLevel());
+        update.setStartTime(campaign.getStartTime());
+        update.setEndTime(campaign.getEndTime());
+        update.setMetaData(campaign.getMetaData());
+        update.setVersion(campaign.getVersion());
+
+        domainService.updateCampaign(ctx, campaign.getId(), update);
       }
-
-      domainService.delCampaignMembers(
-          ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
-
-      CampaignUpdateModel update = new CampaignUpdateModel();
-      update.setName(campaign.getName());
-      update.setNumOfGames(campaign.getNumOfGames());
-      update.setStatus(CampaignUpdateModel.Status.CLOSED);
-      update.setType(CampaignUpdateModel.Type.FREE_GAMES);
-      update.setGameId(campaign.getGameId());
-      update.setBetLevel(campaign.getBetLevel());
-      update.setStartTime(campaign.getStartTime());
-      update.setEndTime(campaign.getEndTime());
-      update.setMetaData(campaign.getMetaData());
-      update.setVersion(campaign.getVersion());
-
-      domainService.updateCampaign(ctx, campaign.getId(), update);
-
 
       CancelFreeRoundsResponse resp = new CancelFreeRoundsResponse();
       resp.setFreespinsId(request.getFreespinsId());
@@ -901,6 +923,8 @@ public class RelaxGamingController {
                 setting.getLauncherAppApiCredential()));
 
 
+    Long itemId = Long.parseLong(gameId);
+
     List<Long> campaignIds = null;
     if (!isDemo) {
       try {
@@ -947,6 +971,23 @@ public class RelaxGamingController {
               operatorRes.setPromotions(promotions);
               */
               campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
+
+              // check cache for campaigns that should be assigned
+              String playerExtRef = operatorRes.getPlayerId().toString();
+              String cacheKey = getCampaignCacheKey(playerExtRef, itemId);
+              Long cachedCampaign = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, cacheKey);
+              if (Objects.isNull(cachedCampaign)) {
+
+                log.debug("player [{}] with key [{}] has no cached campaign for game [{}]", 
+                  playerExtRef, cacheKey, itemId);
+              } else {
+
+                log.debug("player [{}] with key [{}] has cached campaign [{}] for game [{}]", 
+                  playerExtRef, cacheKey, cachedCampaign, itemId);
+
+                campaignIds.add(cachedCampaign);
+                removeCachedCampaign(playerExtRef, itemId);
+              }
             }
           }
         }
@@ -962,7 +1003,7 @@ public class RelaxGamingController {
       rq.setDemo(isDemo);
       if(!isDemo) rq.setToken(token);
       rq.setAppId(setting.getLauncherItemApplicationId());
-      rq.setItemId(Long.parseLong(gameId));
+      rq.setItemId(itemId);
       rq.setCampaigns(campaignIds);
       rq.setExternal(Boolean.TRUE);
 
@@ -1080,7 +1121,7 @@ public class RelaxGamingController {
           if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
             campaignExtRef += p.getPromoCode();
           }
-          campaignId = createOrJoinCampaign(companyId, campaignExtRef, currency, p);
+          campaignId = findOrCreateCampaign(companyId, campaignExtRef, currency, p);
           campaignIds.add(campaignId);
 
           AckPromotion ackPromotion = new AckPromotion();
@@ -1115,7 +1156,7 @@ public class RelaxGamingController {
    * @param promotion
    * @return campaignId
    */
-  private Long createOrJoinCampaign(Long companyId, 
+  private Long findOrCreateCampaign(Long companyId, 
     String campaignExtRef, String currency, Promotion promotion) {
     RelaxGamingConfiguration.CompanySetting setting = 
         relaxConfig.getCompanySettings().get(companyId);
@@ -1151,18 +1192,6 @@ public class RelaxGamingController {
     if (Objects.isNull(campaign)) {
       throw new EntityNotExistException("Campaign not exist, despite created. Please check.");
     }
-/*
-    SimpleAccountModel memberAccount = domainService.getAccountByExtRef(ctx, promotion.getPlayerId().toString());
-    if (Objects.isNull(memberAccount)) {
-      throw new EntityNotExistException("User with ext-ref [%d] does not exists", promotion.getPlayerId());
-    }
-
-    domainService.addCampaignMembers(
-        ctx, campaign.getId(), Lists.newArrayList(memberAccount.getId().toString()));
-*/
-    domainService.addCampaignMembers(
-        ctx, campaign.getId(), Lists.newArrayList(promotion.getPlayerId().toString()));
-
 
     return campaign.getId();
   }
@@ -1374,6 +1403,56 @@ public class RelaxGamingController {
     }
     return connector.clientService(companyId);
   }
+
+  /**
+   * getCampaignCacheKey
+   * 
+   * @param playerExtRef
+   * @param itemId
+   * @return cache key
+   */
+  private String getCampaignCacheKey(String playerExtRef, Long itemId) {
+      return String.format("%s:%d", DigestUtils.sha256Hex(playerExtRef), itemId);
+  }
+
+  private void addCachedCampaign(String playerExtRef, Long itemId, Long campaignId) {
+    String key = DigestUtils.sha256Hex(playerExtRef);
+    String campaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, key);
+    cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns + "," + campaignId);
+    cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, String.format("%s:%d", key, itemId), campaignId);
+    log.debug("player [{}] with key [{}] added campaign [{}] to [{}]", playerExtRef, key, campaignId, campaigns);
+  }
+
+  private void removeCachedCampaign(String playerExtRef, Long itemId) {
+    String key = DigestUtils.sha256Hex(playerExtRef);
+    String campaignKey = String.format("%s:%d", key, itemId);
+    String campaigns = "";
+    Long campaignId = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, Long.class, campaignKey);
+    if (Objects.isNull(campaignId)) {
+      log.debug("player [{}] with key [{}] has no cached campaign for game [{}]", playerExtRef, key, itemId);
+    } else {
+      String cachedCampaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, key);
+      if (CommonUtils.isEmptyOrNull(cachedCampaigns)) {
+        throw new ApplicationException("player [%s] with key [%s] cache is inconsistent", playerExtRef, key);
+      } else {
+        String campaignIdString = campaignId.toString();
+        for (String c : cachedCampaigns.split(",")) {
+          if (!c.equals(campaignIdString)) {
+            if (!campaigns.equals("")) {
+              campaigns += ",";
+            }
+            campaigns += c;
+          }
+        }
+        log.debug("player [{}] with key [{}] update campaign from [{}] to [{}]", 
+          playerExtRef, key, cachedCampaigns, campaigns);
+        cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns);
+      }
+      cacheProvider.remove(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, campaignKey);
+    }
+  }
+
+
 
   /**
    * getRgs
