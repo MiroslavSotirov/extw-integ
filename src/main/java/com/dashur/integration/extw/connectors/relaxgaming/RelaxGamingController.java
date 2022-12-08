@@ -1432,7 +1432,11 @@ public class RelaxGamingController {
   private void addCachedCampaign(String accountExtRef, Long itemId, Long campaignId) {
     String key = DigestUtils.sha256Hex(accountExtRef);
     String campaigns = cacheProvider.get(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, String.class, key);
-    cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns + "," + campaignId);
+    if (CommonUtils.isEmptyOrNull(campaigns)) {
+      cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaignId.toString());
+    } else {
+      cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYER_CAMPAIGNS, key, campaigns + "," + campaignId.toString());
+    }
     cacheProvider.put(RelaxGamingConfiguration.CACHE_NAME_PLAYERGAME_CAMPAIGN, String.format("%s:%d", key, itemId), campaignId);
     log.debug("player [{}] with key [{}] added campaign [{}] to [{}]", accountExtRef, key, campaignId, campaigns);
   }
