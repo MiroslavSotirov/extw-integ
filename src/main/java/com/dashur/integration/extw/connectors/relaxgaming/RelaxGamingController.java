@@ -967,23 +967,27 @@ public class RelaxGamingController {
               log.error("Could not read VerifyTokenResponse. Skip checking promotions and launch anyway.");
             } else {
               // ubo promotions test code
-              /*
+              
               List<Promotion> promotions = new ArrayList<Promotion>();
               Promotion p = new Promotion();
               p.setPromotionType("freerounds");
-              p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
-              p.setTxId(UUID.randomUUID().toString());
+//              p.setPromotionId(10000L + (Math.abs(new Random(new Date().getTime()).nextLong()) % 10000L));
+              p.setPromotionId(156L);
+//              p.setTxId(UUID.randomUUID().toString());
+              p.setTxId("dev-156-83348");
               p.setPlayerId(operatorRes.getPlayerId());
               p.setPartnerId(operatorRes.getPartnerId());
               p.setGameRef(operatorReq.getGameRef());
-              p.setAmount(5);
+              p.setAmount(7);
               p.setFreespinValue(100L);
-              p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
-              p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
+//              p.setExpires(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+//              p.setPromoCode("ubopromo-" + UUID.randomUUID().toString());
+              p.setExpires(ZonedDateTime.parse("2022-12-26T11:20:03Z"));
+              p.setPromoCode("elysium_1test_22122022-PC");
               promotions.add(p);
               log.info("adding test promotion {}", p);
               operatorRes.setPromotions(promotions);
-              */
+              
               campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
 
               // check cache for campaigns that should be assigned
@@ -1121,45 +1125,58 @@ public class RelaxGamingController {
 
     if (Objects.nonNull(response.getPromotions())) {
       for (Promotion p : response.getPromotions()) {
-        if (p.getPromotionType() == "freerounds" && // or "featuretrigger"
-          p.getGameRef() == request.getGameRef() &&
-          p.getPlayerId() == response.getPlayerId()) {     
 
-          if (Objects.isNull(ackRequest)) {
-            ackRequest = new AckPromotionAddRequest();
-            ackRequest.setPromotions(new ArrayList<AckPromotion>());
-          }
-          if (Objects.isNull(campaignIds)) {
-            campaignIds = new ArrayList<Long>();
-          }
+        if (p.getPromotionType().equals("freerounds")) { // or "featuretrigger"
+          log.debug("processing freesound promotion {}", p);
 
-          // relax-[promotionId]:promoCode
-          String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
-          if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
-            campaignExtRef += p.getPromoCode();
-          }
-          campaignId = findOrCreateCampaign(companyId, campaignExtRef, currency, p);
-          campaignIds.add(campaignId);
+          if (!p.getGameRef().equals(request.getGameRef()) || 
+            !p.getPlayerId().equals(response.getPlayerId())) {
+              log.error("promotions is not configured for this player or game. ignoring.");
+              continue;
+          } else {
 
-          AckPromotion ackPromotion = new AckPromotion();
-          AckPromotionData data = new AckPromotionData();
-          data.setChannel(request.getChannel());
-          data.setFreespinsId(campaignId.toString());
-          ackPromotion.setPlayerId(response.getPlayerId());
-          ackPromotion.setPromotionId(p.getPromotionId());
-          ackPromotion.setTxId(p.getTxId());
-          ackPromotion.setData(data);
-          ackRequest.getPromotions().add(ackPromotion);
+            if (Objects.isNull(ackRequest)) {
+              ackRequest = new AckPromotionAddRequest();
+              ackRequest.setPromotions(new ArrayList<AckPromotion>());
+            }
+            if (Objects.isNull(campaignIds)) {
+              campaignIds = new ArrayList<Long>();
+            }
+
+            // relax-[promotionId]:promoCode
+            String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
+            if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
+              campaignExtRef += p.getPromoCode();
+            }
+            campaignId = findOrCreateCampaign(companyId, campaignExtRef, currency, p);
+            campaignIds.add(campaignId);
+
+            AckPromotion ackPromotion = new AckPromotion();
+            AckPromotionData data = new AckPromotionData();
+            data.setChannel(request.getChannel());
+            data.setFreespinsId(campaignId.toString());
+            ackPromotion.setPlayerId(response.getPlayerId());
+            ackPromotion.setPromotionId(p.getPromotionId());
+            ackPromotion.setTxId(p.getTxId());
+            ackPromotion.setData(data);
+            ackRequest.getPromotions().add(ackPromotion);
+          }
         }
       }
     }
 
-    if (Objects.nonNull(ackRequest)) {
+    if (Objects.isNull(ackRequest)) {
+      log.debug("no addPromotionAdd request to send");
+    } else {
       RelaxGamingConfiguration.CompanySetting setting = 
           relaxConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
-      getClientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
+      try {
+        getClientService(companyId).ackPromotionAdd(auth, partnerId, ackRequest);
+      } catch(Exception ex) {
+        log.error("ignoring failed ackPromotionAdd request", ex);
+      }
     }
     return campaignIds;
   }  
