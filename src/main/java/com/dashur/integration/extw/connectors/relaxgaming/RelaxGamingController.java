@@ -967,7 +967,7 @@ public class RelaxGamingController {
               log.error("Could not read VerifyTokenResponse. Skip checking promotions and launch anyway.");
             } else {
               // ubo promotions test code
-              
+              /*
               List<Promotion> promotions = new ArrayList<Promotion>();
               Promotion p = new Promotion();
               p.setPromotionType("freerounds");
@@ -987,7 +987,7 @@ public class RelaxGamingController {
               promotions.add(p);
               log.info("adding test promotion {}", p);
               operatorRes.setPromotions(promotions);
-              
+              */
               campaignIds = ackPromotions(setting.getCompanyId(), operatorReq, operatorRes);
 
               // check cache for campaigns that should be assigned
