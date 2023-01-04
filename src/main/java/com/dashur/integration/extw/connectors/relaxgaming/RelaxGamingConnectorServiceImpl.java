@@ -723,7 +723,9 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         if (idx >= 0) {
           String promoCode = campaignExtRef.substring(idx+1);
           if (promoCode.length() > 0) {
-            return promoCode;
+            if (!promoCode.contains(RelaxGamingConfiguration.NOPROMO_PREFIX)){
+              return promoCode;
+            }
           }
         }
       }

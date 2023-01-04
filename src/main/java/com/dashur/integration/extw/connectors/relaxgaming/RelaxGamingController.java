@@ -464,10 +464,11 @@ public class RelaxGamingController {
 
       itemId = RelaxGamingConnectorServiceImpl.Utils.getItemId(request.getGameRef());
         // relax-api:promoCode
-      campaignExtRef = String.format("%sapi:", RelaxGamingConfiguration.CAMPAIGN_PREFIX);
-      if (!CommonUtils.isEmptyOrNull(request.getPromoCode())) {
-        campaignExtRef += request.getPromoCode();
-      }
+      promoCode = request.getPromoCode();
+      if (CommonUtils.isEmptyOrNull(promoCode)) {
+        promoCode = RelaxGamingConfiguration.NOPROMO_PREFIX + UUID.randomUUID().toString();
+      }            
+      campaignExtRef = String.format("%sapi:%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, promoCode);
       accountExtRef = request.getPlayerId().toString();
 
       if (log.isDebugEnabled()) {
@@ -521,9 +522,9 @@ public class RelaxGamingController {
 
             if (m.getGameId().equals(itemId)) {
 
-                if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
+              if (m.getName().startsWith(RelaxGamingConfiguration.CAMPAIGN_PREFIX)) {
 
-                  if (m.getStatus().equals(CampaignModel.Status.ACTIVE)) {
+                if (m.getStatus().equals(CampaignModel.Status.ACTIVE)) {
 
                   Integer remaining = m.getNumOfGames();
                   log.debug("campaign is active with an initial amount of {} spins", remaining);
@@ -1144,10 +1145,11 @@ public class RelaxGamingController {
             }
 
             // relax-[promotionId]:promoCode
-            String campaignExtRef = String.format("%s%d:", relaxConfig.CAMPAIGN_PREFIX, p.getPromotionId());
-            if (!CommonUtils.isEmptyOrNull(p.getPromoCode())) {
-              campaignExtRef += p.getPromoCode();
+            String promoCode = p.getPromoCode();
+            if (CommonUtils.isEmptyOrNull(promoCode)) {
+              promoCode = RelaxGamingConfiguration.NOPROMO_PREFIX + UUID.randomUUID().toString();
             }
+            String campaignExtRef = String.format("%s%d:%s", RelaxGamingConfiguration.CAMPAIGN_PREFIX, p.getPromotionId(), promoCode);
             campaignId = findOrCreateCampaign(companyId, campaignExtRef, currency, p);
             campaignIds.add(campaignId);
 
