@@ -23,7 +23,8 @@ public interface ElysiumRgsService extends RgsServiceProvider {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   List<GameHash> gameHashes(
-    @QueryParam("currencies") String currencies);
+    @QueryParam("currencies") String currencies,
+    @QueryParam("companyId") String companyId);
 
   @POST
   @Path("/playcheckext")

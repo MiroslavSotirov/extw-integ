@@ -244,7 +244,7 @@ public class RelaxGamingController {
     String partnerId = String.valueOf(request.getCredentials().getPartnerId());
     RelaxGamingConfiguration.CompanySetting setting = getCompanySettings(partnerId, false);
 
-    List<GameHash> rgsResp = getRgs().gameHashes("EUR");
+    List<GameHash> rgsResp = getRgs().gameHashes("EUR", setting.getCompanyId().toString());
     List<GameInfo> games = new ArrayList<GameInfo>();
     GetGamesResponse resp = new GetGamesResponse();
     for ( GameHash hash : rgsResp) {
