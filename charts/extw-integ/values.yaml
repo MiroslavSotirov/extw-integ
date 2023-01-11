@@ -53,7 +53,7 @@ ingress:
     nginx.ingress.kubernetes.io/cors-max-age: "151200"
     nginx.ingress.kubernetes.io/enable-cors: "true"
   hosts:
-    - host: dev.elysiumstudios.se
+    - host: devdeployment.elysiumstudios.se
       paths:
         - path: /v1/extw/exp/relaxgaming/
           pathType: Prefix
