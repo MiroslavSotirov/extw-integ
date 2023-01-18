@@ -43,7 +43,8 @@ echo "GAMEREF $GAMEREF"
 CRED='{ "partnerid": '$PARTNER_ID', "src": "partnerapi", "bouser": "" }'
 REQ='{ "credentials": '$CRED', "jurisdiction": "EU", "txid": '$TX_ID', "playerid": '$PLAYER_ID',  
 	"partnerid": '$PARTNER_ID', "gameref": "'$GAMEREF'", "amount": '$AMOUNT', 
-	"freespinvalue": '$FREESPINS_VALUE', "expires": "'$EXPIRES'", "currency": "'$CURRENCY'", "promocode": "'$PROMOCODE'" }'
+	"freespinvalue": '$FREESPINS_VALUE', "expires": "'$EXPIRES'", "currency": "'$CURRENCY'" }'
+#	"freespinvalue": '$FREESPINS_VALUE', "expires": "'$EXPIRES'", "currency": "'$CURRENCY'", "promocode": "'$PROMOCODE'" }'
 
 echo $REQ
 
