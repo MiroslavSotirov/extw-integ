@@ -13,7 +13,7 @@ imagePullSecrets:
 
 # specify the application properties config file to use
 # from /charts/extw-integ/
-configFile: application-prd.properties
+configFile: application-prd-eu-1.properties
 
 nameOverride: ""
 fullnameOverride: ""

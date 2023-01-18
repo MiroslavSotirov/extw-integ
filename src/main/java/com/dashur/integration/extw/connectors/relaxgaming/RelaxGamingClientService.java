@@ -21,7 +21,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/p2p/v1/")
+@Path("/")
 public interface RelaxGamingClientService {
 
   static final String AUTHORIZATION = "Authorization";
