@@ -16,5 +16,5 @@ OPR_META='{ "opr_meta": { "gameRef": "rlx.em.em.'$GAME_ID'", "clientId": "dev_te
 REQ='{"req_id":"'$UUID'","timestamp":"'$TIME'","token":"'$TOKEN'","ctx":'$OPR_META'}'
 HMAC=$(echo -n "$REQ" | openssl dgst -hmac "$HMAC_KEY" -binary | base64)
 
-curl -v "$BASE_URL/v1/extw/connect/relaxgaming/$COMPANY_ID/v1/auth" -d "$REQ" -H "X-DAS-HMAC: $HMAC"
+curl -i "$BASE_URL/v1/extw/connect/relaxgaming/$COMPANY_ID/v1/auth" -d "$REQ" -H "X-DAS-HMAC: $HMAC"
 #curl -v "$BASE_URL/v1/auth" -d "$REQ" -H "X-DAS-HMAC: $HMAC"

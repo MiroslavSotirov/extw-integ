@@ -13,4 +13,4 @@ HMAC=$(echo -n "$REQ" | openssl dgst -hmac "$HMAC_KEY" -binary | base64)
 
 echo $REQ
 
-curl -v "$BASE_URL/v1/extw/connect/relaxgaming/$COMPANY_ID/v1/transaction" -d "$REQ" -H "X-DAS-HMAC: $HMAC"
+curl -i "$BASE_URL/v1/extw/connect/relaxgaming/$COMPANY_ID/v1/transaction" -d "$REQ" -H "X-DAS-HMAC: $HMAC"

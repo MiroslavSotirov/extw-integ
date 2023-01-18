@@ -20,4 +20,4 @@ REQ='{ "roundid": "'$ROUND_ID'", "credentials": '$CRED', "jurisdiction": "EU", "
 
 echo $REQ
 
-curl -v "$BASE_URL/v1/extw/exp/relaxgaming/playcheck" -d "$REQ" -H "Content-Type: application/json" -H "Authorization: Basic ZW06dGVzdA=="
+curl -i "$BASE_URL/v1/extw/exp/relaxgaming/playcheck" -d "$REQ" -H "Content-Type: application/json" -H "Authorization: $AUTH"
