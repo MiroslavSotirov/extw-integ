@@ -20,4 +20,4 @@ REQ='{ "credentials": '$CRED', "jurisdiction": "EU", "playerid": "'$PLAYER_ID'",
 
 echo $REQ
 
-curl -i "$BASE_URL/v1/extw/exp/relaxgaming/freespins/get" -d "$REQ" -H "Content-Type: application/json" -H "Authorization: Basic $AUTH"
+curl -i "$BASE_URL/v1/extw/exp/relaxgaming/freespins/get" -d "$REQ" -H "Content-Type: application/json" -H "Authorization: $AUTH"

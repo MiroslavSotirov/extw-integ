@@ -16,7 +16,7 @@
 
 
 # prd env extw-integ
-export BASE_URL="https://publicdeployment.eu-1.elysiumstudios.se"
+export BASE_URL="https://public.eu-1.elysiumstudios.se"
 export COMPANY_ID=366276199
 export PARTNER_ID=10
 export AUTH="Basic ZW06UzdiQTB4NVh6ZG5TUTU3Uw=="
