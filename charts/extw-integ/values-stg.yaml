@@ -57,6 +57,8 @@ ingress:
       paths:
         - path: /v1/extw/exp/relaxgaming/
           pathType: Prefix
+        - path: /v1/extw/connect/
+          pathType: Prefix
   tls: []
 
 resources:
