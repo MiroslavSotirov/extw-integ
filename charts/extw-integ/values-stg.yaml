@@ -46,7 +46,7 @@ ingress:
     nginx.ingress.kubernetes.io/http2-push-preload: "true"
     field.cattle.io/ingressState: "{}"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      "more_set_headers \"Access-Control-Expose-Headers: ETag\";"
+      more_set_headers "Access-Control-Expose-Headers: ETag";
       allow   185.137.18.121/32;
       allow   35.221.118.233/32;
       allow   49.128.80.0/28;
