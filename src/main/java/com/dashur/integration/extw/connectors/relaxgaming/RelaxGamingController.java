@@ -1027,7 +1027,9 @@ public class RelaxGamingController {
       rq.setAppId(setting.getLauncherItemApplicationId());
       rq.setItemId(itemId);
       rq.setCampaigns(campaignIds);
-      rq.setExternal(Boolean.TRUE);
+      if (!isDemo) {
+        rq.setExternal(Boolean.TRUE);
+      }
 
       Map<String, Object> confParams = Maps.newHashMap();
 
