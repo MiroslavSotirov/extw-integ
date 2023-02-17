@@ -275,7 +275,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     }
 
     String hmacKey = relaxConfig.getCompanySettings().get(companyId).getHmacKey();
-    if (CommonUtils.isEmptyOrNull(hmacKey)) {
+    if (!CommonUtils.isEmptyOrNull(hmacKey)) {
       String computedHmacHash = HmacUtil.hash(hmacKey, rawData);
       if (!computedHmacHash.equals(hmacHash)) {
         log.warn(
