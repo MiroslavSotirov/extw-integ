@@ -129,7 +129,7 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
               CONFIG_PREFIX,
               "co.%s.hmac-key",
               String.class,
-              UUID.randomUUID().toString(),
+              "",
               config,
               companyId.toString());
       String clientId =
