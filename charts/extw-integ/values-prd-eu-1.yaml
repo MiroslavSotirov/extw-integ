@@ -48,10 +48,10 @@ ingress:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "Access-Control-Expose-Headers: ETag";
       allow   185.137.18.121/32;
-      allow   185.137.17.11/32
-      allow   185.137.17.21/32
-      allow   185.137.19.21/32
-      allow   37.114.74.36/32
+      allow   185.137.17.11/32;
+      allow   185.137.17.21/32;
+      allow   185.137.19.21/32;
+      allow   37.114.74.36/32;
       allow   35.221.118.233/32;
       allow   49.128.80.0/28;
       allow   31.209.43.76;
