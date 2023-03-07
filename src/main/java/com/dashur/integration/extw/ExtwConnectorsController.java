@@ -20,22 +20,29 @@ import org.jboss.resteasy.annotations.Body;
 import org.jboss.resteasy.annotations.jaxrs.HeaderParam;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.jboss.resteasy.spi.HttpRequest;
-import io.quarkus.logging.Log; 
+import io.quarkus.logging.Log;
 
 /**
- * 1. This controller are not meant to be open up to public, so its a controller that only be used
- * to transtlate ext-wallet call to operator system. 2. The contoller can support for multi operator
- * integration It will handle all the necessary incoming mapping from dashur ext-wallet call.
- * However Individual necessary operator mapping will be handled on the backing service.
+ * 1. This controller are not meant to be open up to public, so its a controller
+ * that only be used
+ * to transtlate ext-wallet call to operator system. 2. The contoller can
+ * support for multi operator
+ * integration It will handle all the necessary incoming mapping from dashur
+ * ext-wallet call.
+ * However Individual necessary operator mapping will be handled on the backing
+ * service.
  */
 @Slf4j
 @Path("/v1/extw/connect")
 public class ExtwConnectorsController {
-  @Inject ExtwIntegConfiguration config;
+  @Inject
+  ExtwIntegConfiguration config;
 
-  @Inject ConnectorServiceLocator connectorLocator;
+  @Inject
+  ConnectorServiceLocator connectorLocator;
 
-  @Context HttpRequest request;
+  @Context
+  HttpRequest request;
 
   @GET
   @Produces(MediaType.TEXT_PLAIN)
@@ -61,50 +68,43 @@ public class ExtwConnectorsController {
     DasRequest request = null;
 
     log.trace("input : [{} - {} - {} - {}]", operator, companyId, api, data);
-//    System.out.format("input : [%s - %s - %s - %s]", operator, companyId, api, data);
+    // System.out.format("input : [%s - %s - %s - %s]", operator, companyId, api,
+    // data);
 
     try {
       switch (api) {
-        case Constant.API_AUTH:
-          {
-            request = CommonUtils.jsonRead(DasAuthRequest.class, data);
-            response =
-                connectorLocator.getConnector(operator).auth(companyId, (DasAuthRequest) request);
-            break;
-          }
-        case Constant.API_BALANCE:
-          {
-            request = CommonUtils.jsonRead(DasBalanceRequest.class, data);
-            response =
-                connectorLocator
-                    .getConnector(operator)
-                    .balance(companyId, (DasBalanceRequest) request);
-            break;
-          }
-        case Constant.API_TRANSACTION:
-          {
-            request = CommonUtils.jsonRead(DasTransactionRequest.class, data);
-            response =
-                connectorLocator
-                    .getConnector(operator)
-                    .transaction(companyId, (DasTransactionRequest) request);
-            break;
-          }
-        case Constant.API_ENDROUND:
-          {
-            request = CommonUtils.jsonRead(DasEndRoundRequest.class, data);
-            response =
-                connectorLocator
-                    .getConnector(operator)
-                    .endRound(companyId, (DasEndRoundRequest) request);
-            break;
-          }
+        case Constant.API_AUTH: {
+          request = CommonUtils.jsonRead(DasAuthRequest.class, data);
+          response = connectorLocator.getConnector(operator).auth(companyId, (DasAuthRequest) request);
+          break;
+        }
+        case Constant.API_BALANCE: {
+          request = CommonUtils.jsonRead(DasBalanceRequest.class, data);
+          response = connectorLocator
+              .getConnector(operator)
+              .balance(companyId, (DasBalanceRequest) request);
+          break;
+        }
+        case Constant.API_TRANSACTION: {
+          request = CommonUtils.jsonRead(DasTransactionRequest.class, data);
+          response = connectorLocator
+              .getConnector(operator)
+              .transaction(companyId, (DasTransactionRequest) request);
+          break;
+        }
+        case Constant.API_ENDROUND: {
+          request = CommonUtils.jsonRead(DasEndRoundRequest.class, data);
+          response = connectorLocator
+              .getConnector(operator)
+              .endRound(companyId, (DasEndRoundRequest) request);
+          break;
+        }
         default:
           throw new ApplicationException("Unable to find api: [%s]", api);
       }
     } catch (Exception e) {
       log.error("ExtwConnectorsController.api [{} - {} - {}]", operator, companyId, api, e);
-//      return error(e, start, request);
+      // return error(e, start, request);
       Response resp = error(e, start, request);
       log.info("Response [{}] - status [{}]", resp.readEntity(String.class), resp.getStatus());
       return resp;
@@ -150,8 +150,8 @@ public class ExtwConnectorsController {
       status = Response.Status.BAD_REQUEST;
     } else if (e instanceof CustomException) {
       status = Response.Status.INTERNAL_SERVER_ERROR;
-      errCode = ((CustomException)e).getErrCode();
-      errDesc = ((CustomException)e).getErrDesc();
+      errCode = ((CustomException) e).getErrCode();
+      errDesc = ((CustomException) e).getErrDesc();
     } else {
       status = Response.Status.INTERNAL_SERVER_ERROR;
     }

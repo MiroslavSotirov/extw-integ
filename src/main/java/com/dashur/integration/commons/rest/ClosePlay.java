@@ -2,6 +2,9 @@ package com.dashur.integration.commons.rest;
 
 import com.dashur.integration.commons.Constant;
 import com.dashur.integration.commons.rest.model.FreePlaysModel;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 
@@ -30,7 +33,7 @@ public class ClosePlay {
       @QueryParam("async") Boolean async,
       @QueryParam("token") String token,
       @QueryParam("forced") Boolean forced,
-      @QueryParam("freePlaysData") Optional<FreePlaysModel> freePlaysData) {
+      @QueryParam("freePlaysData") Optional<String> freePlaysData) {
     boolean success = false;
 
     try {
@@ -51,17 +54,27 @@ public class ClosePlay {
       JsonObject freePlaysJson = Json.createObjectBuilder().build();
 
       if (freePlaysData.isPresent()) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        FreePlaysModel _freePlaysData = null;
+        try {
+          _freePlaysData = objectMapper.readValue(freePlaysData.get(), FreePlaysModel.class);
+        } catch (Exception e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+
         freePlaysJson = Json.createObjectBuilder()
-            .add("promotionCode", freePlaysData.get().getPromotionCode())
-            .add("promotionTotalBet", freePlaysData.get().getPromotionTotalBet())
-            .add("promotionLines", freePlaysData.get().getPromotionLines())
-            .add("promotionMaxLines", freePlaysData.get().isPromotionMaxLines())
-            .add("promotionPlaysDone", freePlaysData.get().getPromotionPlaysDone())
-            .add("promotionPlaysRemaining", freePlaysData.get().getPromotionPlaysRemaining())
-            .add("promotionWonSoFar", freePlaysData.get().getPromotionWonSoFar())
-            .add("promotionExtraInfo", freePlaysData.get().getPromotionExtraInfo())
-            .add("promotionTerms", freePlaysData.get().getPromotionTerms())
-            .add("promotionExpirationDate", freePlaysData.get().getPromotionExpirationDate().toString())
+            .add("promotionCode", _freePlaysData.getPromotionCode())
+            .add("promotionTotalBet", _freePlaysData.getPromotionTotalBet())
+            .add("promotionLines", _freePlaysData.getPromotionLines())
+            .add("promotionMaxLines", _freePlaysData.isPromotionMaxLines())
+            .add("promotionPlaysDone", _freePlaysData.getPromotionPlaysDone())
+            .add("promotionPlaysRemaining", _freePlaysData.getPromotionPlaysRemaining())
+            .add("promotionWonSoFar", _freePlaysData.getPromotionWonSoFar())
+            .add("promotionExtraInfo", _freePlaysData.getPromotionExtraInfo())
+            .add("promotionTerms", _freePlaysData.getPromotionTerms())
+            .add("promotionExpirationDate", _freePlaysData.getPromotionExpirationDate().toString())
             .build();
       }
 
