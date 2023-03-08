@@ -3,6 +3,7 @@ package com.dashur.integration.extw;
 import com.dashur.integration.commons.exception.*;
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.connectors.ConnectorServiceLocator;
+import com.dashur.integration.extw.connectors.relaxgaming.RelaxGamingConnectorServiceImpl;
 import com.dashur.integration.extw.data.*;
 import java.util.Date;
 import java.util.Objects;
@@ -66,6 +67,8 @@ public class ExtwConnectorsController {
     connectorLocator.getConnector(operator).validate(companyId, hmacHash, data);
     DasResponse response;
     DasRequest request = null;
+    RelaxGamingConnectorServiceImpl relax = new RelaxGamingConnectorServiceImpl();
+    relax.init();
 
     log.trace("input : [{} - {} - {} - {}]", operator, companyId, api, data);
     // System.out.format("input : [%s - %s - %s - %s]", operator, companyId, api,
@@ -75,28 +78,33 @@ public class ExtwConnectorsController {
       switch (api) {
         case Constant.API_AUTH: {
           request = CommonUtils.jsonRead(DasAuthRequest.class, data);
-          response = connectorLocator.getConnector(operator).auth(companyId, (DasAuthRequest) request);
+          // response = connectorLocator.getConnector(operator).auth(companyId,
+          // (DasAuthRequest) request);
+          response = relax.auth(companyId, (DasAuthRequest) request);
           break;
         }
         case Constant.API_BALANCE: {
           request = CommonUtils.jsonRead(DasBalanceRequest.class, data);
-          response = connectorLocator
-              .getConnector(operator)
-              .balance(companyId, (DasBalanceRequest) request);
+          // response = connectorLocator
+          // .getConnector(operator)
+          // .balance(companyId, (DasBalanceRequest) request);
+          response = relax.balance(companyId, (DasBalanceRequest) request);
           break;
         }
         case Constant.API_TRANSACTION: {
           request = CommonUtils.jsonRead(DasTransactionRequest.class, data);
-          response = connectorLocator
-              .getConnector(operator)
-              .transaction(companyId, (DasTransactionRequest) request);
+          // response = connectorLocator
+          // .getConnector(operator)
+          // .transaction(companyId, (DasTransactionRequest) request);
+          response = relax.transaction(companyId, (DasTransactionRequest) request);
           break;
         }
         case Constant.API_ENDROUND: {
           request = CommonUtils.jsonRead(DasEndRoundRequest.class, data);
-          response = connectorLocator
-              .getConnector(operator)
-              .endRound(companyId, (DasEndRoundRequest) request);
+          // response = connectorLocator
+          // .getConnector(operator)
+          // .endRound(companyId, (DasEndRoundRequest) request);
+          response = relax.endRound(companyId, (DasEndRoundRequest) request);
           break;
         }
         default:
