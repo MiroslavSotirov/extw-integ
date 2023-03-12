@@ -12,6 +12,6 @@ spec:
       targetPort: extw
       protocol: TCP
       name: extw
-      nodePort: 30500
+      nodePort: 30501
   selector:
     {{- include "extw-integ.selectorLabels" . | nindent 4 }}
