@@ -924,7 +924,7 @@ public class RelaxGamingController {
       ctx = ctx.withCurrency(demoCurrency);
     }
     ctx.getMetaData().put("clientId", clientId);
-    ctx.getMetaData().put("gameRef", getGameRef(gameId));
+    ctx.getMetaData().put("gameRef", gameId);
     ctx.getMetaData().put("channel", channel);
     log.debug("launcher request context: {}", ctx.getMetaData());
 
@@ -955,7 +955,7 @@ public class RelaxGamingController {
           operatorReq.setChannel(channel);
           operatorReq.setClientId(clientId);
           operatorReq.setToken(token);
-          operatorReq.setGameRef(getGameRef(gameId));
+          operatorReq.setGameRef(gameId);
           operatorReq.setPartnerId(setting.getPartnerId());
           operatorReq.setIp(callerIp);
           String auth = setting.getOperatorCredential();
@@ -1073,7 +1073,7 @@ public class RelaxGamingController {
 
       if (!CommonUtils.isEmptyOrNull(callerIp)) {
         Map<String, Object> meta = Maps.newHashMap(ctx.getMetaData());
-        meta.put(com.dashur.integration.commons.Constant.LAUNCHER_META_DATA_KEY_GAME_ID, Long.parseLong(gameId));
+        meta.put(com.dashur.integration.commons.Constant.LAUNCHER_META_DATA_KEY_GAME_ID, itemId);
         meta.put(com.dashur.integration.commons.Constant.LAUNCHER_META_DATA_KEY_IP_ADDRESS, callerIp);
         rq.getCtx().put(com.dashur.integration.commons.Constant.LAUNCHER_META_DATA_KEY_META_DATA, meta);
       }
