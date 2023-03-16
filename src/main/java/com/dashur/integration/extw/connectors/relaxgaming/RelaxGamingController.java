@@ -938,7 +938,7 @@ public class RelaxGamingController {
                 setting.getLauncherAppApiCredential()));
 
 
-    Long itemId = Long.parseLong(gameId);
+    Long itemId = RelaxGamingConnectorServiceImpl.Utils.getItemId(gameId);
 
     List<Long> campaignIds = null;
     if (!isDemo) {
