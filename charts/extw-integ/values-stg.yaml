@@ -50,6 +50,8 @@ ingress:
       allow   185.137.18.121/32;
       allow   35.221.118.233/32;
       allow   49.128.80.0/28;
+      allow   10.0.0.0/8;
+      allow   3.66.88.13;
       deny    all;
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type, If-Match"
