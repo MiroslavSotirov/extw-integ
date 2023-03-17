@@ -912,6 +912,8 @@ public class RelaxGamingController {
     }
 
     Boolean isDemo = mode.equals("fun");
+    String gameRef = getGameRef(gameId);
+    Long itemId = Long.parseLong(gameId);
 
     RequestContext ctx = RequestContext.instance()
                                        .withLanguage(language);
@@ -924,7 +926,7 @@ public class RelaxGamingController {
       ctx = ctx.withCurrency(demoCurrency);
     }
     ctx.getMetaData().put("clientId", clientId);
-    ctx.getMetaData().put("gameRef", gameId);
+    ctx.getMetaData().put("gameRef", gameRef);
     ctx.getMetaData().put("channel", channel);
     log.debug("launcher request context: {}", ctx.getMetaData());
 
@@ -937,8 +939,6 @@ public class RelaxGamingController {
                 setting.getLauncherAppApiId(), 
                 setting.getLauncherAppApiCredential()));
 
-
-    Long itemId = RelaxGamingConnectorServiceImpl.Utils.getItemId(gameId);
 
     List<Long> campaignIds = null;
     if (!isDemo) {
@@ -955,7 +955,7 @@ public class RelaxGamingController {
           operatorReq.setChannel(channel);
           operatorReq.setClientId(clientId);
           operatorReq.setToken(token);
-          operatorReq.setGameRef(gameId);
+          operatorReq.setGameRef(gameRef);
           operatorReq.setPartnerId(setting.getPartnerId());
           operatorReq.setIp(callerIp);
           String auth = setting.getOperatorCredential();
