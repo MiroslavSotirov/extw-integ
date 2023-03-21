@@ -24,7 +24,7 @@ public class AckPromotion {
   private AckPromotionData data;
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("promotionid")
   private Long promotionId;

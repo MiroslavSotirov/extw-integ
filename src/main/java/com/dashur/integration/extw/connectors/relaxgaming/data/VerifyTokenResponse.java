@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
 public class VerifyTokenResponse extends Response {
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("customerId")
   private String customerId;

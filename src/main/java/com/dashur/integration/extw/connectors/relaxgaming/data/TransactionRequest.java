@@ -20,7 +20,7 @@ import lombok.ToString;
 public class TransactionRequest extends Request {
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("roundid")
   private String roundId;   // 26 characters or less for some operators

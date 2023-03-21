@@ -23,7 +23,7 @@ public class AddFeatureTriggersRequest extends ServiceRequest {
   private Long txId;
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("partnerid")
   private Integer partnerId;

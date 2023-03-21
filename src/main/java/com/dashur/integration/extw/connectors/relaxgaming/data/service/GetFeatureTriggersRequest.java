@@ -20,7 +20,7 @@ import lombok.ToString;
 public class GetFeatureTriggersRequest extends ServiceRequest {
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("partnerid")
   private Integer partnerId;

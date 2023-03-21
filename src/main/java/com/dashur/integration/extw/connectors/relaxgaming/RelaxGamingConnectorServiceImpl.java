@@ -375,7 +375,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       } else if (request instanceof DasBalanceRequest) {
         DasBalanceRequest balanceRequest = (DasBalanceRequest) request;
         BalanceRequest operatorReq = new BalanceRequest();
-        operatorReq.setPlayerId(Integer.parseInt(balanceRequest.getAccountExtRef()));
+        operatorReq.setPlayerId(Long.parseLong(balanceRequest.getAccountExtRef()));
         operatorReq.setGameRef(gameRef);
         operatorReq.setCurrency(balanceRequest.getCurrency());
         operatorReq.setSessionId(Long.parseLong(balanceRequest.getToken()));
@@ -387,7 +387,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
         if (DasTransactionCategory.WAGER == txRequest.getCategory()) {
           WithdrawRequest operatorReq = new WithdrawRequest();
-          operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
+          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
           operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(channel);
@@ -410,7 +410,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
         } else if (DasTransactionCategory.PAYOUT == txRequest.getCategory()) {
           DepositRequest operatorReq = new DepositRequest();
-          operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
+          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
           operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setChannel(channel);
@@ -434,7 +434,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
         } else if (DasTransactionCategory.REFUND == txRequest.getCategory()) {
           RollbackRequest operatorReq = new RollbackRequest();
-          operatorReq.setPlayerId(Integer.parseInt(txRequest.getAccountExtRef()));
+          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
           operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
           operatorReq.setGameRef(gameRef);
           operatorReq.setCurrency(txRequest.getCurrency());
@@ -454,7 +454,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       } else if (request instanceof DasEndRoundRequest) {
         DasEndRoundRequest endRequest = (DasEndRoundRequest) request;        
         DepositRequest operatorReq = new DepositRequest();
-        operatorReq.setPlayerId(Integer.parseInt(endRequest.getAccountExtRef()));
+        operatorReq.setPlayerId(Long.parseLong(endRequest.getAccountExtRef()));
         operatorReq.setRoundId(Utils.removePrefix(endRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
         operatorReq.setGameRef(gameRef);
         operatorReq.setChannel(channel);

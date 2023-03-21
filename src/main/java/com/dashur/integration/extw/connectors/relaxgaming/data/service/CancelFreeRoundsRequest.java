@@ -26,6 +26,6 @@ public class CancelFreeRoundsRequest extends ServiceRequest {
   private String freespinsId;
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
 }
