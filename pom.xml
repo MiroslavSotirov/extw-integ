@@ -23,6 +23,14 @@
     <commons.net.version>3.8.0</commons.net.version>
     <jackson.version>2.12.4</jackson.version>
     <guava.version>30.1.1-jre</guava.version>
+    <rest-assured.version>4.4.0</rest-assured.version>
+<!--    
+    <testcontainers.version>1.15.3</testcontainers.version>
+    <testcontainers.version>1.17.6</testcontainers.version>
+-->    
+    <testcontainers.version>1.16.3</testcontainers.version>
+    <okhttp.version>3.14.9</okhttp.version>
+    <karate.version>1.1.0</karate.version>
   </properties>
   <repositories>
     <repository>
@@ -101,6 +109,57 @@
         <groupId>commons-net</groupId>
         <artifactId>commons-net</artifactId>
         <version>${commons.net.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.9.2</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest</artifactId>
+        <version>2.2</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-junit5</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>mockwebserver</artifactId>
+        <version>${okhttp.version}</version>
+<!--        
+        <version>4.10.0</version>
+-->
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>com.intuit.karate</groupId>
+        <artifactId>karate-core</artifactId>
+        <version>${karate.version}</version>
+<!--        
+        <version>1.3.1</version>
+-->
+    </dependency>
+    <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>${testcontainers.version}</version>
+<!--        
+        <version>1.17.6</version>
+-->
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+        <version>${rest-assured.version}</version>
+<!--        
+      <version>5.3.0</version>
+-->
     </dependency>
   </dependencies>
   <build>

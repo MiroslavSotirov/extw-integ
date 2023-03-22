@@ -33,8 +33,6 @@ public class ExtwIntegConfiguration {
    * @return
    */
   public Configuration configuration(String operatorCode) {
-    System.out.format("configuration was called %s\n", operatorCode);
-//    Log.info("configuration was called (Log.info)");
     if (Objects.isNull(operators) || operators.isEmpty() || !operators.containsKey(operatorCode)) {
       throw new EntityNotExistException(
           "Unable to find operator [%s - %s - %s]",
