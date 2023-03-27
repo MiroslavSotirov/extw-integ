@@ -20,7 +20,7 @@ import lombok.ToString;
 public class BalanceRequest extends Request {
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("gameref")
   private String gameRef;

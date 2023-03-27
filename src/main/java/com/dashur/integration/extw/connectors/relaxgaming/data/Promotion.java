@@ -32,7 +32,7 @@ public class Promotion {
   private String txId;
 
   @JsonProperty("playerid")
-  private Integer playerId;
+  private Long playerId;
 
   @JsonProperty("partnerid")
   private Integer partnerId;
