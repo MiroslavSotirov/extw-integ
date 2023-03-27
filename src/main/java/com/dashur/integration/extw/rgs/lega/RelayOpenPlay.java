@@ -1,8 +1,8 @@
-package com.dashur.integration.commons.rest;
+package com.dashur.integration.extw.rgs.lega;
 
 import com.dashur.integration.commons.Constant;
-import com.dashur.integration.commons.rest.model.RelayOpenPlayModel;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
+import com.dashur.integration.extw.rgs.data.RelayOpenPlayModel;
 
 import java.util.Optional;
 

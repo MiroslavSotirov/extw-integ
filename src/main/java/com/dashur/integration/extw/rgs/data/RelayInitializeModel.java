@@ -1,4 +1,4 @@
-package com.dashur.integration.commons.rest.model;
+package com.dashur.integration.extw.rgs.data;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.dashur.integration.commons.rest.model;
+package com.dashur.integration.extw.rgs.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,24 +13,30 @@ import lombok.ToString;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 
-public class RelayGetBalanceModel {
+public class RelayClosePlayModel {
 
     @JsonProperty("sessionId")
     private Long sessionId;
 
+    @JsonProperty("actionId")
+    private Long actionId;
+
+    @JsonProperty("actionResult")
+    private String actionResult;
+
     @JsonProperty("balance")
-    private Number balance;
+    private String balance;
 
     @JsonProperty("freeBalance")
-    private Number freeBalance;
+    private String freeBalance;
 
-    @JsonProperty("freePlaysData")
-    private FreePlaysModel freePlaysData;
+    @JsonProperty("token")
+    private String token;
 
     @JsonProperty("method")
     private String method;
 
-    @JsonProperty("token")
-    private String token;
+    @JsonProperty("freePlaysData")
+    private FreePlaysModel freePlaysData;
 
 }

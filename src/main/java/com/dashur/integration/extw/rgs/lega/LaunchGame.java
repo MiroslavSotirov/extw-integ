@@ -1,10 +1,10 @@
-package com.dashur.integration.commons.rest;
+package com.dashur.integration.extw.rgs.lega;
 
 import com.dashur.integration.commons.Constant;
-import com.dashur.integration.commons.rest.model.LaunchGameModel;
-import com.dashur.integration.commons.rest.model.RelayStakeModel;
-import com.dashur.integration.commons.rest.model.RelayVoidStakeModel;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
+import com.dashur.integration.extw.rgs.data.LaunchGameModel;
+import com.dashur.integration.extw.rgs.data.RelayStakeModel;
+import com.dashur.integration.extw.rgs.data.RelayVoidStakeModel;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

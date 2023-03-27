@@ -1,9 +1,7 @@
-package com.dashur.integration.commons.rest;
+package com.dashur.integration.extw.rgs.lega;
 
 import com.dashur.integration.commons.Constant;
-import com.dashur.integration.commons.rest.model.FreePlaysModel;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.dashur.integration.extw.rgs.data.FreePlaysModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
@@ -64,18 +62,20 @@ public class ClosePlay {
           e.printStackTrace();
         }
 
-        freePlaysJson = Json.createObjectBuilder()
-            .add("promotionCode", _freePlaysData.getPromotionCode())
-            .add("promotionTotalBet", _freePlaysData.getPromotionTotalBet())
-            .add("promotionLines", _freePlaysData.getPromotionLines())
-            .add("promotionMaxLines", _freePlaysData.isPromotionMaxLines())
-            .add("promotionPlaysDone", _freePlaysData.getPromotionPlaysDone())
-            .add("promotionPlaysRemaining", _freePlaysData.getPromotionPlaysRemaining())
-            .add("promotionWonSoFar", _freePlaysData.getPromotionWonSoFar())
-            .add("promotionExtraInfo", _freePlaysData.getPromotionExtraInfo())
-            .add("promotionTerms", _freePlaysData.getPromotionTerms())
-            .add("promotionExpirationDate", _freePlaysData.getPromotionExpirationDate().toString())
-            .build();
+        if (_freePlaysData != null) {
+          freePlaysJson = Json.createObjectBuilder()
+              .add("promotionCode", _freePlaysData.getPromotionCode())
+              .add("promotionTotalBet", _freePlaysData.getPromotionTotalBet())
+              .add("promotionLines", _freePlaysData.getPromotionLines())
+              .add("promotionMaxLines", _freePlaysData.isPromotionMaxLines())
+              .add("promotionPlaysDone", _freePlaysData.getPromotionPlaysDone())
+              .add("promotionPlaysRemaining", _freePlaysData.getPromotionPlaysRemaining())
+              .add("promotionWonSoFar", _freePlaysData.getPromotionWonSoFar())
+              .add("promotionExtraInfo", _freePlaysData.getPromotionExtraInfo())
+              .add("promotionTerms", _freePlaysData.getPromotionTerms())
+              .add("promotionExpirationDate", _freePlaysData.getPromotionExpirationDate().toString())
+              .build();
+        }
       }
 
       JsonObject response = Json.createObjectBuilder().build();

@@ -1,4 +1,4 @@
-package com.dashur.integration.commons.rest;
+package com.dashur.integration.extw.rgs.lega;
 
 import java.util.HashMap;
 import java.util.Map;
