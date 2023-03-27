@@ -21,7 +21,6 @@ import org.jboss.resteasy.annotations.Body;
 import org.jboss.resteasy.annotations.jaxrs.HeaderParam;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.jboss.resteasy.spi.HttpRequest;
-import io.quarkus.logging.Log;
 
 /**
  * 1. This controller are not meant to be open up to public, so its a controller
@@ -78,33 +77,30 @@ public class ExtwConnectorsController {
       switch (api) {
         case Constant.API_AUTH: {
           request = CommonUtils.jsonRead(DasAuthRequest.class, data);
-          // response = connectorLocator.getConnector(operator).auth(companyId,
-          // (DasAuthRequest) request);
-          response = relax.auth(companyId, (DasAuthRequest) request);
+          response = connectorLocator
+              .getConnector(operator)
+              .auth(companyId, (DasAuthRequest) request);
           break;
         }
         case Constant.API_BALANCE: {
           request = CommonUtils.jsonRead(DasBalanceRequest.class, data);
-          // response = connectorLocator
-          // .getConnector(operator)
-          // .balance(companyId, (DasBalanceRequest) request);
-          response = relax.balance(companyId, (DasBalanceRequest) request);
+          response = connectorLocator
+              .getConnector(operator)
+              .balance(companyId, (DasBalanceRequest) request);
           break;
         }
         case Constant.API_TRANSACTION: {
           request = CommonUtils.jsonRead(DasTransactionRequest.class, data);
-          // response = connectorLocator
-          // .getConnector(operator)
-          // .transaction(companyId, (DasTransactionRequest) request);
-          response = relax.transaction(companyId, (DasTransactionRequest) request);
+          response = connectorLocator
+              .getConnector(operator)
+              .transaction(companyId, (DasTransactionRequest) request);
           break;
         }
         case Constant.API_ENDROUND: {
           request = CommonUtils.jsonRead(DasEndRoundRequest.class, data);
-          // response = connectorLocator
-          // .getConnector(operator)
-          // .endRound(companyId, (DasEndRoundRequest) request);
-          response = relax.endRound(companyId, (DasEndRoundRequest) request);
+          response = connectorLocator
+              .getConnector(operator)
+              .endRound(companyId, (DasEndRoundRequest) request);
           break;
         }
         default:
