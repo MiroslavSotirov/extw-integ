@@ -1,19 +1,19 @@
-# Default values for extw-integ
+# Default values for extw-dev
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-namespace: elysium
+namespace: elysium-test
 
 image:
   repo: "harbor.elysiumstudios.se/elysium/"
-  name: "extw-integ"
+  name: "extw-dev"
 
 imagePullSecrets:
   - name: harborcred
 
 # specify the application properties config file to use
-# from /charts/extw-integ/
-configFile: application-prd.properties
+# from /charts/extw-dev/
+configFile: application.properties
 
 nameOverride: ""
 fullnameOverride: ""
@@ -53,25 +53,25 @@ ingress:
     nginx.ingress.kubernetes.io/cors-max-age: "151200"
     nginx.ingress.kubernetes.io/enable-cors: "true"
   hosts:
-    - host: public.elysiumstudios.se
+    - host: devdeployment.elysiumstudios.se
       paths:
-        - path: /v1/extw/exp/relaxgaming/
+        - path: /v1/extw-dev/exp/relaxgaming/
           pathType: Prefix
-        - path: /v1/extw/connect/
+        - path: /v1/extw-dev/connect/
           pathType: Prefix
   tls: []
 
-resources:
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  limits:
-    cpu: 500m
-    memory: 1Gi
-  requests:
-    cpu: 250m
-    memory: 256Mi
+  # limits:
+  #   cpu: 500m
+  #   memory: 1Gi
+  # requests:
+  #   cpu: 250m
+  #   memory: 256Mi
 
 nodeSelector: {}
 
