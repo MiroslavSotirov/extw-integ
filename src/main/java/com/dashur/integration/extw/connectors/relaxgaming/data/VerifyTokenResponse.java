@@ -33,7 +33,7 @@ public class VerifyTokenResponse extends Response {
 
   // ISO 3166-1 alpha 2
   @JsonProperty("countrycode")
-  private String counteryCode;
+  private String countryCode;
 
   @JsonProperty("gender")
   private Integer gender;

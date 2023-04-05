@@ -1,0 +1,5 @@
+<ignore>
+    <!-- content will be ignore                                                                      -->
+    <!-- quarkus only making use of this files to make sure its detected as its quarkus dependencies -->
+</ignore>
+

@@ -17,7 +17,7 @@ public class ConnectorServiceLocator {
   @Inject
   @Named("parimatch-connector")
   ConnectorService parimatch;
-/*
+
   @Inject
   @Named("qt-connector")
   ConnectorService qt;
@@ -25,7 +25,6 @@ public class ConnectorServiceLocator {
   @Inject
   @Named("vgs-connector")
   ConnectorService vgs;
-*/
 
   @Inject
   @Named("relaxgaming-connector")
@@ -43,7 +42,7 @@ public class ConnectorServiceLocator {
     if (Constant.OPERATOR_PARIMATCH.equals(operatorCode)) {
       return parimatch;
     }
-/*
+
     if (Constant.OPERATOR_QTECH.equals(operatorCode)) {
       return qt;
     }
@@ -51,7 +50,7 @@ public class ConnectorServiceLocator {
     if (Constant.OPERATOR_VGS.equals(operatorCode)) {
       return vgs;
     }
-*/
+
     if (Constant.OPERATOR_RELAXGAMING.equals(operatorCode)) {
       return relaxgaming;
     }
