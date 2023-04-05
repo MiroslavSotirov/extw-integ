@@ -108,6 +108,14 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
               10,
               config,
               companyId.toString());
+      Long betSettingId =
+          value(
+              CONFIG_PREFIX,
+              "co.%s.bet-setting-id",
+              Long.class,
+              companyId,
+              config,
+              companyId.toString());
       String channel =
           value(
               CONFIG_PREFIX,
@@ -177,6 +185,7 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
           CompanySetting.builder()
               .companyId(companyId)
               .launcherItemApplicationId(applicationId)
+              .betSettingId(betSettingId)
               .partnerId(partnerId)
               .channel(channel)
               .operatorCredential(operatorCredential)
@@ -200,6 +209,7 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
   public static class CompanySetting {
     private Long companyId;
     private Long launcherItemApplicationId;
+    private Long betSettingId;
     private Integer partnerId;
     private String channel;
     private String operatorCredential;
