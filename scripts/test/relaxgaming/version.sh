@@ -6,4 +6,7 @@ then
 	exit 1;
 fi
 
-curl -i "$BASE_URL/v1/extw/exp/relaxgaming/version"
+URL="$BASE_URL/v1/extw/exp/relaxgaming/version"
+CMD="curl -v $URL"
+echo "$CMD"
+curl -v "$URL" # "$BASE_URL/v1/extw/exp/relaxgaming/version"
