@@ -1,4 +1,4 @@
-package com.dashur.integration.extw.rgs.data;
+package com.dashur.integration.extw.connectors.raw.data.service;
 
 import java.time.LocalDate;
 
@@ -15,7 +15,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FreePlaysModel {
+public class FreePlaysData {
 
     @JsonProperty("promotionCode")
     private String promotionCode;

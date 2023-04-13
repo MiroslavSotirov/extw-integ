@@ -1,6 +1,5 @@
-package com.dashur.integration.extw.connectors.relaxgaming.data;
+package com.dashur.integration.extw.connectors.raw.data.service;
 
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -18,11 +17,15 @@ import lombok.ToString;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class AckPromotionData {
+public class Credentials {
 
-  @JsonProperty("channel")
-  private String channel;
+  @JsonProperty("partnerid")
+  private Integer partnerId;
 
-  @JsonProperty("freespinsid")
-  private String freespinsId;
+  @JsonProperty("src")
+  private String callSource; // "backoffice" or "partnerapi"
+
+  @JsonProperty("bouser")
+  private String backofficeUser;
+
 }

@@ -1,7 +1,7 @@
-package com.dashur.integration.extw.rgs.lega;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import com.dashur.integration.commons.Constant;
-import com.dashur.integration.extw.rgs.data.FreePlaysModel;
+import com.dashur.integration.extw.connectors.raw.data.service.FreePlaysData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
@@ -58,9 +58,9 @@ public class RelayWin {
 
           if (freePlaysData.isPresent()) {
             ObjectMapper objectMapper = new ObjectMapper();
-            FreePlaysModel _freePlaysData = null;
+            FreePlaysData _freePlaysData = null;
             try {
-              _freePlaysData = objectMapper.readValue(freePlaysData.get(), FreePlaysModel.class);
+              _freePlaysData = objectMapper.readValue(freePlaysData.get(), FreePlaysData.class);
             } catch (Exception e) {
               // TODO Auto-generated catch block
               e.printStackTrace();

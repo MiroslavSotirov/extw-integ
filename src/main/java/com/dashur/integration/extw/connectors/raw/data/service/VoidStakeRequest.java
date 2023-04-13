@@ -1,6 +1,6 @@
-package com.dashur.integration.extw.connectors.relaxgaming.data;
+package com.dashur.integration.extw.connectors.raw.data.service;
 
-import java.util.List;
+import com.dashur.integration.extw.connectors.raw.data.Request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -18,11 +18,21 @@ import lombok.ToString;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class AckPromotionData {
+public class VoidStakeRequest extends Request {
 
-  @JsonProperty("channel")
-  private String channel;
+    @JsonProperty("sessionId")
+    private Long sessionId;
 
-  @JsonProperty("freespinsid")
-  private String freespinsId;
+    @JsonProperty("rgsPlayId")
+    private Long rgsPlayId;
+
+    @JsonProperty("actionId")
+    private Long actionId;
+
+    @JsonProperty("token")
+    private String token;
+
+    @JsonProperty("voidedActionId")
+    private String voidedActionId;
+
 }

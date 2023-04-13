@@ -11,4 +11,5 @@ public class Constant {
   public static final String OPERATOR_VGS = "vgs";
   public static final String OPERATOR_QTECH = "qt";
   public static final String OPERATOR_RELAXGAMING = "relaxgaming";
+  public static final String OPERATOR_RAW = "raw";
 }

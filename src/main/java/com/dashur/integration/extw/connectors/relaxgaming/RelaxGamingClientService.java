@@ -31,70 +31,70 @@ public interface RelaxGamingClientService {
   @Path("/{partnerid}/verifytoken")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  // ResponseWrapper<VerifyTokenResponse> 
+  // ResponseWrapper<VerifyTokenResponse>
   javax.ws.rs.core.Response verifyToken(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final VerifyTokenRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final VerifyTokenRequest request);
 
   @POST
   @Path("/{partnerid}/withdraw")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  // ResponseWrapper<TransactionResponse> 
+  // ResponseWrapper<TransactionResponse>
   javax.ws.rs.core.Response withdraw(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final WithdrawRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final WithdrawRequest request);
 
   @POST
   @Path("/{partnerid}/deposit")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  //ResponseWrapper<TransactionResponse> 
+  // ResponseWrapper<TransactionResponse>
   javax.ws.rs.core.Response deposit(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final DepositRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final DepositRequest request);
 
   @POST
   @Path("/{partnerid}/rollback")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  // ResponseWrapper<TransactionResponse> 
+  // ResponseWrapper<TransactionResponse>
   javax.ws.rs.core.Response rollback(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final RollbackRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final RollbackRequest request);
 
   @POST
   @Path("/{partnerid}/getbalance")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  // ResponseWrapper<BalanceResponse> 
+  // ResponseWrapper<BalanceResponse>
   javax.ws.rs.core.Response getBalance(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final BalanceRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final BalanceRequest request);
 
   @POST
   @Path("/{partnerid}/ackpromotionadd")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  //  AckPromotionAddResponse 
+  // AckPromotionAddResponse
   javax.ws.rs.core.Response ackPromotionAdd(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final AckPromotionAddRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final AckPromotionAddRequest request);
 
   @POST
   @Path("/{partnerid}/addfreespins")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  // TransactionResponse 
+  // TransactionResponse
   javax.ws.rs.core.Response addFreespins(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId, 
-    final AddFreeSpinsRequest request);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId,
+      final AddFreeSpinsRequest request);
 
   @POST
   @Path("/{partnerid}/ping")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   PingResponse ping(
-    @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId);
+      @HeaderParam(AUTHORIZATION) String auth, @PathParam(PARTNERID) Integer partnerId);
 
 }

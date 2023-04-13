@@ -1,20 +1,23 @@
-package com.dashur.integration.extw.connectors.relaxgaming;
+package com.dashur.integration.extw.connectors.raw;
 
-import com.dashur.integration.commons.RequestContext;
 import com.dashur.integration.commons.exception.ApplicationException;
 import com.dashur.integration.commons.exception.AuthException;
 import com.dashur.integration.commons.exception.BaseException;
 import com.dashur.integration.commons.exception.EntityNotExistException;
 import com.dashur.integration.commons.exception.PaymentException;
 import com.dashur.integration.commons.exception.ValidationException;
-import com.dashur.integration.commons.exception.DuplicateException;
 import com.dashur.integration.commons.exception.CustomException;
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.Constant;
 import com.dashur.integration.extw.ExtwIntegConfiguration;
 import com.dashur.integration.extw.connectors.ConnectorService;
 import com.dashur.integration.extw.connectors.HmacUtil;
-import com.dashur.integration.extw.connectors.relaxgaming.data.*;
+import com.dashur.integration.extw.connectors.raw.data.*;
+import com.dashur.integration.extw.connectors.raw.data.service.LaunchGameRequest;
+import com.dashur.integration.extw.connectors.raw.data.service.LaunchGameResponse;
+import com.dashur.integration.extw.connectors.raw.data.service.StakeRequest;
+import com.dashur.integration.extw.connectors.raw.data.service.VoidStakeRequest;
+import com.dashur.integration.extw.connectors.raw.data.service.WinRequest;
 import com.dashur.integration.extw.data.DasAuthRequest;
 import com.dashur.integration.extw.data.DasAuthResponse;
 import com.dashur.integration.extw.data.DasBalanceRequest;
@@ -30,31 +33,14 @@ import com.dashur.integration.extw.data.DasTransactionResponse;
 import com.dashur.integration.commons.domain.DomainService;
 import com.dashur.integration.commons.domain.CommonService;
 import com.dashur.integration.commons.rest.CampaignClientService;
-import com.dashur.integration.commons.rest.model.CampaignCreateModel;
-import com.dashur.integration.commons.rest.model.CampaignModel;
-import com.dashur.integration.commons.rest.model.SimpleAccountModel;
-import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
-import com.dashur.integration.commons.rest.model.CampaignBetLevelModel;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.time.ZonedDateTime;
-import java.time.ZoneOffset;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.math.BigDecimal;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -64,10 +50,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-@Named("relaxgaming-connector")
+@Named("raw-connector")
 @Singleton
 @Slf4j
-public class RelaxGamingConnectorServiceImpl implements ConnectorService {
+public class RawConnectorServiceImpl implements ConnectorService {
 
   @Inject
   ExtwIntegConfiguration config;
@@ -82,28 +68,28 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @RestClient
   CampaignClientService campaignClientService;
 
-  private RelaxGamingConfiguration relaxConfig;
+  private RawConfiguration rawConfig;
 
-  private Map<Long, RelaxGamingClientService> clientServices;
+  private Map<Long, RawClientService> clientServices;
 
   @PostConstruct
   public void init() {
     clientServices = new ConcurrentHashMap<>();
-    relaxConfig = config.configuration(Constant.OPERATOR_RELAXGAMING, RelaxGamingConfiguration.class);
+    rawConfig = config.configuration(Constant.OPERATOR_RAW, RawConfiguration.class);
   }
 
   @Override
   public DasAuthResponse auth(Long companyId, DasAuthRequest request) {
     try {
-      log.info("RelaxGamingConnectorServiceImpl.auth [{}] [[}]", companyId, request);
-      RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
+      log.info("RawConnectorServiceImpl.auth [{}] [[}]", companyId, request);
+      RawConfiguration.CompanySetting setting = rawConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
-      RelaxGamingClientService clientService = clientService(companyId);
-      VerifyTokenRequest operatorReq = (VerifyTokenRequest) Utils.map(request, setting);
+      RawClientService clientService = clientService(companyId);
+      LaunchGameRequest operatorReq = (LaunchGameRequest) Utils.map(request, setting);
       return (DasAuthResponse) Utils.map(request,
-          verifyToken(companyId, operatorReq,
-              clientService.verifyToken(auth, partnerId, operatorReq)));
+          launchGame(companyId, operatorReq,
+              clientService.launchGame(auth, partnerId, operatorReq)));
     } catch (WebApplicationException e) {
       throw Utils.toException(e);
     }
@@ -112,11 +98,11 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasBalanceResponse balance(Long companyId, DasBalanceRequest request) {
     try {
-      log.info("RelaxGamingConnectorServiceImpl.balance [{}] [[}]", companyId, request);
-      RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
+      log.info("RawConnectorServiceImpl.balance [{}] [[}]", companyId, request);
+      RawConfiguration.CompanySetting setting = rawConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
-      RelaxGamingClientService clientService = clientService(companyId);
+      RawClientService clientService = clientService(companyId);
       BalanceRequest operatorReq = (BalanceRequest) Utils.map(request, setting);
       return (DasBalanceResponse) Utils.map(request, balance(clientService.getBalance(auth, partnerId, operatorReq)));
     } catch (WebApplicationException e) {
@@ -127,23 +113,20 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasTransactionResponse transaction(Long companyId, DasTransactionRequest request) {
     try {
-      log.info("RelaxGamingConnectorServiceImpl.transaction [{}] [[}]", companyId, request);
-      RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
-      RelaxGamingClientService clientService = clientService(companyId);
+      log.info("RawConnectorServiceImpl.transaction [{}] [[}]", companyId, request);
+      RawConfiguration.CompanySetting setting = rawConfig.getCompanySettings().get(companyId);
+      RawClientService clientService = clientService(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
 
       if (DasTransactionCategory.WAGER == request.getCategory()) {
-        WithdrawRequest operatorReq = (WithdrawRequest) Utils.map(request, setting);
-        TransactionResponse operatorRes = transaction(clientService.withdraw(auth, partnerId, operatorReq));
+        StakeRequest operatorReq = (StakeRequest) Utils.map(request, setting);
+        TransactionResponse operatorRes = transaction(clientService.stake(auth, partnerId, operatorReq));
         if (Objects.isNull(operatorRes.getBalance())) {
           // null balance when wager is 0 (used for promotions) and Dashur expects it
           log.info("Send additional balance request due to missing balance in transaction reply. Wager was {}",
               operatorReq.getAmount());
           BalanceRequest balReq = new BalanceRequest();
-          balReq.setPlayerId(operatorReq.getPlayerId());
-          balReq.setGameRef(operatorReq.getGameRef());
-          balReq.setCurrency(operatorReq.getCurrency());
           balReq.setSessionId(operatorReq.getSessionId());
           balReq.setTimestamp();
           balReq.setRequestId();
@@ -152,12 +135,12 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         }
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       } else if (DasTransactionCategory.PAYOUT == request.getCategory()) {
-        DepositRequest operatorReq = (DepositRequest) Utils.map(request, setting);
-        TransactionResponse operatorRes = transaction(clientService.deposit(auth, partnerId, operatorReq));
+        WinRequest operatorReq = (WinRequest) Utils.map(request, setting);
+        TransactionResponse operatorRes = transaction(clientService.win(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       } else if (DasTransactionCategory.REFUND == request.getCategory()) {
-        RollbackRequest operatorReq = (RollbackRequest) Utils.map(request, setting);
-        TransactionResponse operatorRes = transaction(clientService.rollback(auth, partnerId, operatorReq));
+        VoidStakeRequest operatorReq = (VoidStakeRequest) Utils.map(request, setting);
+        TransactionResponse operatorRes = transaction(clientService.voidStake(auth, partnerId, operatorReq));
         return (DasTransactionResponse) Utils.map(request, operatorRes);
       }
     } catch (WebApplicationException e) {
@@ -171,13 +154,13 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   @Override
   public DasEndRoundResponse endRound(Long companyId, DasEndRoundRequest request) {
     try {
-      log.info("RelaxGamingConnectorServiceImpl.endRound [{}] [[}]", companyId, request);
-      RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
+      log.info("RawConnectorServiceImpl.endRound [{}] [[}]", companyId, request);
+      RawConfiguration.CompanySetting setting = rawConfig.getCompanySettings().get(companyId);
       String auth = setting.getOperatorCredential();
       Integer partnerId = setting.getPartnerId();
-      RelaxGamingClientService clientService = clientService(companyId);
-      DepositRequest operatorReq = (DepositRequest) Utils.map(request, setting);
-      TransactionResponse operatorRes = transaction(clientService.deposit(auth, partnerId, operatorReq));
+      RawClientService clientService = clientService(companyId);
+      StakeRequest operatorReq = (StakeRequest) Utils.map(request, setting);
+      TransactionResponse operatorRes = transaction(clientService.stake(auth, partnerId, operatorReq));
       return (DasEndRoundResponse) Utils.map(request, operatorRes);
     } catch (WebApplicationException e) {
       throw Utils.toException(e);
@@ -192,14 +175,14 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
     return res.readEntity(ErrorResponse.class);
   }
 
-  public VerifyTokenResponse verifyToken(Long companyId, VerifyTokenRequest req, javax.ws.rs.core.Response res) {
+  public LaunchGameResponse launchGame(Long companyId, LaunchGameRequest req, javax.ws.rs.core.Response res) {
     if (Utils.isSuccess(res.getStatus())) {
-      return readResponse(res, VerifyTokenResponse.class);
+      return readResponse(res, LaunchGameResponse.class);
     }
     throw Utils.toException(readErrorResponse(res));
   }
 
-  public BalanceResponse balance(javax.ws.rs.core.Response res) { // ResponseWrapper<BalanceResponse> res) {
+  public BalanceResponse balance(javax.ws.rs.core.Response res) {
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, BalanceResponse.class);
     }
@@ -208,48 +191,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   // static final
 
-  public TransactionResponse transaction(javax.ws.rs.core.Response res) { // ResponseWrapper<TransactionResponse> res) {
-    /*
-     * // test case for the ip blocked error
-     * throw new CustomException("IP_BLOCKED", "IP_BLOCKED");
-     */
-    /*
-     * // test custom operator error
-     * ErrorResponse errorRes = new ErrorResponse();
-     * errorRes.setCode("CUSTOM_ERROR");
-     * errorRes.setMessage("oOooOo Ignore This oooOooo");
-     * ErrorParameters errorParams = new ErrorParameters();
-     * errorParams.setCode(559L);
-     * errorParams.setMessage("CUSTOM_ERROR");
-     * ErrorDetails errorDetails = new ErrorDetails();
-     * errorDetails.
-     * setMessage("This is a custom error message. It's very nice and could be quite verbose. Let's see\nif it handles linebreaks. No need to take it as far as \ttabs though, that would be silly."
-     * );
-     * errorDetails.
-     * setButtonText("A button text that could also be quite long, I guess.");
-     * errorDetails.setTitle("A title is a title.");
-     * errorParams.setDetails(errorDetails);
-     * errorRes.setParameters(errorParams);
-     * throw Utils.toException(errorRes);
-     */
-    /*
-     * String[] errors = {
-     * "BLOCKED_FROM_PRODUCT",
-     * "IP_BLOCKED",
-     * "DAILY_TIME_LIMIT",
-     * "WEEKLY_TIME_LIMIT",
-     * "MONTHLY_TIME_LIMIT",
-     * "SPENDING_BUDGET_EXCEEDED",
-     * "CUSTOM_ERROR",
-     * "INSUFFICIENT_FUNDS",
-     * "TRANSACTION_NOT_FOUND",
-     * "INVALID_TXID"
-     * };
-     * ErrorResponse errorRes = new ErrorResponse();
-     * Random rng = new Random(new Date().getTime());
-     * errorRes.setCode(errors[Math.abs(rng.nextInt()) % errors.length]);
-     * throw Utils.toException(errorRes);
-     */
+  public TransactionResponse transaction(javax.ws.rs.core.Response res) {
     int status = res.getStatus();
     if (Utils.isSuccess(res.getStatus())) {
       return readResponse(res, TransactionResponse.class);
@@ -271,11 +213,11 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
       throw new ApplicationException("rawData is empty");
     }
 
-    if (!relaxConfig.getCompanySettings().containsKey(companyId)) {
+    if (!rawConfig.getCompanySettings().containsKey(companyId)) {
       throw new ApplicationException("company [%s] config is not exists", companyId);
     }
 
-    String hmacKey = relaxConfig.getCompanySettings().get(companyId).getHmacKey();
+    String hmacKey = rawConfig.getCompanySettings().get(companyId).getHmacKey();
     if (!CommonUtils.isEmptyOrNull(hmacKey)) {
       String computedHmacHash = HmacUtil.hash(hmacKey, rawData);
       if (!computedHmacHash.equals(hmacHash)) {
@@ -290,7 +232,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
   @Override
   public void validateIp(Long companyId, String callerIp) {
-    if (relaxConfig.isValidateIps()) {
+    if (rawConfig.isValidateIps()) {
       if (CommonUtils.isEmptyOrNull(callerIp)) {
         throw new ValidationException(
             "Unable to validate caller ip. IP Validation is enabled, but caller ip is empty [%s]",
@@ -299,7 +241,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
       callerIp = callerIp.trim();
 
-      if (!relaxConfig.getWhitelistIps().contains(callerIp)) {
+      if (!rawConfig.getWhitelistIps().contains(callerIp)) {
         throw new ValidationException(
             "Unable to validate caller ip. IP [%s] is not whitelisted", callerIp);
       }
@@ -307,8 +249,8 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
   }
 
   /** Retrieve clientService based on company id */
-  public RelaxGamingClientService clientService(Long companyId) {
-    RelaxGamingConfiguration.CompanySetting setting = relaxConfig.getCompanySettings().get(companyId);
+  public RawClientService clientService(Long companyId) {
+    RawConfiguration.CompanySetting setting = rawConfig.getCompanySettings().get(companyId);
 
     if (clientServices.containsKey(setting.getCompanyId())) {
       return clientServices.get(setting.getCompanyId());
@@ -316,9 +258,9 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
 
     try {
       String baseUri = setting.getRemoteBaseUri();
-      RelaxGamingClientService clientService = RestClientBuilder.newBuilder()
+      RawClientService clientService = RestClientBuilder.newBuilder()
           .baseUri(new URI(baseUri))
-          .build(RelaxGamingClientService.class);
+          .build(RawClientService.class);
       clientServices.put(setting.getCompanyId(), clientService);
 
       return clientServices.get(setting.getCompanyId());
@@ -338,7 +280,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
      * @param casinoId
      * @return
      */
-    static Request map(DasRequest request, RelaxGamingConfiguration.CompanySetting settings) {
+    static Request map(DasRequest request, RawConfiguration.CompanySetting settings) {
       Request output;
 
       log.debug("map request: {}", CommonUtils.jsonToString(request));
@@ -352,7 +294,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         throw new ValidationException("Unable to resolve gameRef");
       }
       if (clientId.isEmpty()) {
-        // throw new ValidationException("Unable to resolve clientId");
         log.warn("unable to resolve clientId");
       }
 
@@ -362,22 +303,19 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         if (ip.isEmpty()) {
           throw new ValidationException("Unable to resolve player ip address");
         }
-        VerifyTokenRequest operatorReq = new VerifyTokenRequest();
+        LaunchGameRequest operatorReq = new LaunchGameRequest();
         operatorReq.setChannel(channel);
         operatorReq.setClientId(clientId);
         operatorReq.setToken(request.getToken());
         operatorReq.setGameRef(gameRef);
         operatorReq.setPartnerId(settings.getPartnerId());
-        operatorReq.setIp(ip); // TODO: get this from the request context?
+        operatorReq.setIp(ip);
         operatorReq.setTimestamp();
         operatorReq.setRequestId(request.getReqId());
         output = operatorReq;
       } else if (request instanceof DasBalanceRequest) {
         DasBalanceRequest balanceRequest = (DasBalanceRequest) request;
         BalanceRequest operatorReq = new BalanceRequest();
-        operatorReq.setPlayerId(Long.parseLong(balanceRequest.getAccountExtRef()));
-        operatorReq.setGameRef(gameRef);
-        operatorReq.setCurrency(balanceRequest.getCurrency());
         operatorReq.setSessionId(Long.parseLong(balanceRequest.getToken()));
         operatorReq.setTimestamp();
         operatorReq.setRequestId(balanceRequest.getReqId());
@@ -386,43 +324,27 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         DasTransactionRequest txRequest = (DasTransactionRequest) request;
 
         if (DasTransactionCategory.WAGER == txRequest.getCategory()) {
-          WithdrawRequest operatorReq = new WithdrawRequest();
-          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
-          operatorReq.setGameRef(gameRef);
-          operatorReq.setChannel(channel);
-          operatorReq.setCurrency(txRequest.getCurrency());
+          StakeRequest operatorReq = new StakeRequest();
           operatorReq.setClientId(clientId);
-          operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
+          operatorReq
+              .setRgsPlayId(Long.parseLong(Utils.removePrefix(txRequest.getRoundId(), RawConfiguration.ROUND_PREFIX)));
           operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
-          if (Objects.isNull(txRequest.getCampaignId()) || txRequest.getCampaignId() == 0) {
-            operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
-            operatorReq.setTxType("withdraw");
-          } else {
-            operatorReq.setAmount(CommonUtils.toCents(txRequest.getFreeAmount()).longValue());
-            operatorReq.setTxType("freespinbet");
-          }
-          log.debug("wager of type {} and amount {}", operatorReq.getTxType(), operatorReq.getAmount());
           operatorReq.setEnded(Boolean.FALSE);
           operatorReq.setTimestamp();
           operatorReq.setRequestId(txRequest.getReqId());
           output = operatorReq;
 
         } else if (DasTransactionCategory.PAYOUT == txRequest.getCategory()) {
-          DepositRequest operatorReq = new DepositRequest();
-          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
-          operatorReq.setGameRef(gameRef);
-          operatorReq.setChannel(channel);
-          operatorReq.setCurrency(txRequest.getCurrency());
+          StakeRequest operatorReq = new StakeRequest();
+          operatorReq
+              .setRgsPlayId(Long.parseLong(Utils.removePrefix(txRequest.getRoundId(), RawConfiguration.ROUND_PREFIX)));
           operatorReq.setClientId(clientId);
-          operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
-          operatorReq.setSessionId(Long.parseLong(txRequest.getToken()));
+          operatorReq.setToken(Long.parseLong(txRequest.getToken()));
           operatorReq.setAmount(CommonUtils.toCents(txRequest.getAmount()).longValue());
           if (Objects.isNull(txRequest.getCampaignId()) || txRequest.getCampaignId() == 0) {
-            operatorReq.setTxType("deposit");
+            operatorReq.setType("deposit");
           } else {
-            operatorReq.setTxType("freespinpayout"); // or freespinpayoutfinal
+            operatorReq.setType("freespinpayout"); // or freespinpayoutfinal
             operatorReq.setFreespinsId(txRequest.getCampaignId().toString());
             operatorReq.setPromoCode(Utils.getPromoCode(txRequest.getCampaignExtRef()));
           }
@@ -433,10 +355,9 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
           output = operatorReq;
 
         } else if (DasTransactionCategory.REFUND == txRequest.getCategory()) {
-          RollbackRequest operatorReq = new RollbackRequest();
-          operatorReq.setPlayerId(Long.parseLong(txRequest.getAccountExtRef()));
-          operatorReq.setRoundId(Utils.removePrefix(txRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
-          operatorReq.setGameRef(gameRef);
+          VoidStakeRequest operatorReq = new VoidStakeRequest();
+          operatorReq
+              .setRgsPlayId(Long.parseLong(Utils.removePrefix(txRequest.getRoundId(), RawConfiguration.ROUND_PREFIX)));
           operatorReq.setCurrency(txRequest.getCurrency());
           operatorReq.setTxId(String.valueOf(txRequest.getTxId()));
           operatorReq.setOriginalTxId(String.valueOf(txRequest.getRefundTxId()));
@@ -453,9 +374,10 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         }
       } else if (request instanceof DasEndRoundRequest) {
         DasEndRoundRequest endRequest = (DasEndRoundRequest) request;
-        DepositRequest operatorReq = new DepositRequest();
+        StakeRequest operatorReq = new StakeRequest();
         operatorReq.setPlayerId(Long.parseLong(endRequest.getAccountExtRef()));
-        operatorReq.setRoundId(Utils.removePrefix(endRequest.getRoundId(), RelaxGamingConfiguration.ROUND_PREFIX));
+        operatorReq
+            .setRgsPlayId(Long.parseLong(Utils.removePrefix(endRequest.getRoundId(), RawConfiguration.ROUND_PREFIX)));
         operatorReq.setGameRef(gameRef);
         operatorReq.setChannel(channel);
         operatorReq.setCurrency(endRequest.getCurrency());
@@ -464,14 +386,14 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         operatorReq.setSessionId(Long.parseLong(endRequest.getToken()));
         operatorReq.setAmount(0L);
         if (Objects.isNull(endRequest.getCampaignId()) || endRequest.getCampaignId() == 0) {
-          operatorReq.setTxType("deposit");
+          operatorReq.setType("deposit");
         } else {
-          operatorReq.setTxType(endRequest.getSpinsRemain() > 0 ? "freespinpayout" : "freespinpayoutfinal");
+          operatorReq.setType(endRequest.getSpinsRemain() > 0 ? "freespinpayout" : "freespinpayoutfinal");
           operatorReq.setFreespinsId(endRequest.getCampaignId().toString());
           operatorReq.setPromoCode(Utils.getPromoCode(endRequest.getCampaignExtRef()));
         }
         operatorReq.setEnded(Boolean.TRUE);
-        operatorReq.setTimestamp(); // new date().getTime());
+        operatorReq.setTimestamp();
         operatorReq.setRequestId(endRequest.getReqId());
         output = operatorReq;
       } else {
@@ -502,7 +424,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
                 operatorRes.getCurrency(),
                 CommonUtils.fromCents(operatorRes.getBalance().longValue())));
         if (CommonUtils.isEmptyOrNull(operatorRes.getUserName())) {
-          response.setUsername("ref-" + operatorRes.getPlayerId()); // operatorRes.getCustomerId());
+          response.setUsername("ref-" + operatorRes.getPlayerId());
         } else {
           response.setUsername(operatorRes.getUserName());
         }
@@ -613,25 +535,6 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
               errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
       }
 
-      /*
-       * All other error codes:
-       * INVALID_PARAMETERS => Something wrong with the request parameters.
-       * TRANSACTION_DECLINED => Operator declined the withdraw transaction.
-       * Transaction shall not be rollbacked.
-       * RC_SESSION_EXPIRED => Reality check is due.
-       * RETRY => Platform shall retry the transaction (deposit or rollback).
-       * ROLLBACK => Platform shall rollback the withdraw.
-       * MAINTENANCE => Scheduled maintenance is ongoing.
-       * UNHANDLED => Final fallback error code.
-       * SETUP_TIMEOUT => Requests are piling up.
-       * CHANNEL_MISSING => channel in data object is missing.
-       * FREESPINSID_MISSING => freespinsid in data object is missing.
-       * GAME_SESSION_MISMATCH => Returned in withdraw if sessionid in request was
-       * used for another gameref.
-       *
-       * CUSTOM_ERROR => Custom error messages can be sent for example for special
-       * limits.
-       */
       return new ApplicationException(
           "Connector response [%s] - [%s] - events [%s]",
           errorRes.getCode(), errorRes.getMessage(), errorRes.getEvents());
@@ -730,7 +633,7 @@ public class RelaxGamingConnectorServiceImpl implements ConnectorService {
         if (idx >= 0) {
           String promoCode = campaignExtRef.substring(idx + 1);
           if (promoCode.length() > 0) {
-            if (!promoCode.contains(RelaxGamingConfiguration.NOPROMO_PREFIX)) {
+            if (!promoCode.contains(RawConfiguration.NOPROMO_PREFIX)) {
               return promoCode;
             }
           }

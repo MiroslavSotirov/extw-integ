@@ -1,4 +1,4 @@
-package com.dashur.integration.extw.rgs.lega;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import java.util.HashMap;
 import java.util.Map;

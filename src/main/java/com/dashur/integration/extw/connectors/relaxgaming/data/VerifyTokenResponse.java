@@ -54,7 +54,7 @@ public class VerifyTokenResponse extends Response {
   private String jurisdiction;
 
   @JsonProperty("balance")
-  private Long balance;   // in cents
+  private Long balance; // in cents
 
   @JsonProperty("partnerid")
   private Integer partnerId;

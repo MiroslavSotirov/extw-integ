@@ -1,8 +1,7 @@
-package com.dashur.integration.extw.rgs.lega;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import com.dashur.integration.commons.Constant;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
-import com.dashur.integration.extw.rgs.data.RelayGetBalanceModel;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

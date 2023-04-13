@@ -1,9 +1,7 @@
-package com.dashur.integration.extw.connectors.relaxgaming.data;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,14 +13,16 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
-public class AckPromotionData {
+public class ErrorParameters {
 
-  @JsonProperty("channel")
-  private String channel;
+  @JsonProperty("errorCode")
+  private Long code;
 
-  @JsonProperty("freespinsid")
-  private String freespinsId;
+  @JsonProperty("errorMessage")
+  private String message;
+
+  @JsonProperty("errorDetails")
+  private ErrorDetails details;
 }

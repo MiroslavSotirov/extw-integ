@@ -1,4 +1,4 @@
-package com.dashur.integration.extw.rgs.data;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

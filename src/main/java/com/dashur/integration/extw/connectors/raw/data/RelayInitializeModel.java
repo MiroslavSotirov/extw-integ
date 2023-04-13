@@ -1,7 +1,8 @@
-package com.dashur.integration.extw.rgs.data;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import java.util.List;
 
+import com.dashur.integration.extw.connectors.raw.data.service.FreePlaysData;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,7 @@ public class RelayInitializeModel {
     private String sessionId;
 
     @JsonProperty("stakeIncrement")
-    private List<Number> stakeIncrement;
+    private List<Long> stakeIncrement;
 
     @JsonProperty("minStake")
     private Number minStake;
@@ -29,13 +30,13 @@ public class RelayInitializeModel {
     private Number maxStake;
 
     @JsonProperty("autoPlayList")
-    private List<Number> autoPlayList;
+    private List<Long> autoPlayList;
 
     @JsonProperty("autoPlayDefault")
-    private Number autoPlayDefault;
+    private Long autoPlayDefault;
 
     @JsonProperty("currencyId")
-    private Number currencyId;
+    private Long currencyId;
 
     @JsonProperty("currencyPrefix")
     private String currencyPrefix;
@@ -62,10 +63,10 @@ public class RelayInitializeModel {
     private Number sessionExpiry;
 
     @JsonProperty("freePlaysData")
-    private FreePlaysModel freePlaysData;
+    private FreePlaysData freePlaysData;
 
     @JsonProperty("userInfo")
-    private Object userInfo;
+    private UserInfo userInfo;
 
     @JsonProperty("method")
     private String method;

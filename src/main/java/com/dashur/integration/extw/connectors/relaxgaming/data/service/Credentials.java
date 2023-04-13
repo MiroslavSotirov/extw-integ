@@ -23,7 +23,7 @@ public class Credentials {
   private Integer partnerId;
 
   @JsonProperty("src")
-  private String callSource;  // "backoffice" or "partnerapi"
+  private String callSource; // "backoffice" or "partnerapi"
 
   @JsonProperty("bouser")
   private String backofficeUser;

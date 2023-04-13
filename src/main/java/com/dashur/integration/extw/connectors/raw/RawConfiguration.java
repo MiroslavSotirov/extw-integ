@@ -1,4 +1,4 @@
-package com.dashur.integration.extw.connectors.relaxgaming;
+package com.dashur.integration.extw.connectors.raw;
 
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.AbstractOperatorConfiguration;
@@ -17,9 +17,9 @@ import org.eclipse.microprofile.config.Config;
 
 @Getter
 @Slf4j
-public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
-  static final String CONFIG_PREFIX = "extw.operator.relaxgaming";
-  static final String OPERATOR_CODE = Constant.OPERATOR_RELAXGAMING;
+public class RawConfiguration extends AbstractOperatorConfiguration {
+  static final String CONFIG_PREFIX = "extw.operator.raw";
+  static final String OPERATOR_CODE = Constant.OPERATOR_RAW;
   static final String AUTHORIZATION = "Authorization";
   static final String ROUND_PREFIX = "1040-";
   static final String DEFAULT_CURRENCY = "EUR";
@@ -41,8 +41,8 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
   private Map<String, Long> operatorIdMap;
   private Map<Long, CompanySetting> companySettings;
 
-  public RelaxGamingConfiguration() {
-    this.operator = Constant.OPERATOR_RELAXGAMING;
+  public RawConfiguration() {
+    this.operator = Constant.OPERATOR_RAW;
     this.operatorIdMap = new HashMap<>();
     this.companySettings = new HashMap<>();
     this.whitelistIps = new HashSet<>();
@@ -179,7 +179,7 @@ public class RelaxGamingConfiguration extends AbstractOperatorConfiguration {
       companySettings.put(companyId, setting);
     }
 
-    log.debug("relax config: {}", CommonUtils.jsonToString(this));
+    log.debug("raw config: {}", CommonUtils.jsonToString(this));
     return this;
   }
 

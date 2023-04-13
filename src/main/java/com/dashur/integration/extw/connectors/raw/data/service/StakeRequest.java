@@ -1,9 +1,15 @@
-package com.dashur.integration.extw.rgs.data;
+package com.dashur.integration.extw.connectors.raw.data.service;
 
+import java.math.BigInteger;
+
+import com.dashur.integration.extw.connectors.raw.data.Request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
@@ -11,8 +17,11 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RelayOpenPlayModel {
+@EqualsAndHashCode(callSuper = false)
+
+public class StakeRequest extends Request {
 
     @JsonProperty("sessionId")
     private Long sessionId;
@@ -20,27 +29,15 @@ public class RelayOpenPlayModel {
     @JsonProperty("rgsPlayId")
     private Long rgsPlayId;
 
-    @JsonProperty("legaPlayId")
-    private Long legaPlayId;
-
     @JsonProperty("actionId")
     private Long actionId;
 
-    @JsonProperty("actionResult")
-    private String actionResult;
-
-    @JsonProperty("balance")
-    private Number balance;
-
-    @JsonProperty("freeBalance")
-    private String freeBalance;
-
-    @JsonProperty("freePlaysData")
-    private FreePlaysModel freePlaysData;
-
-    @JsonProperty("method")
-    private String method;
+    @JsonProperty("amount")
+    private Long amount;
 
     @JsonProperty("token")
     private String token;
+
+    @JsonProperty("type")
+    private String type;
 }

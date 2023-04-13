@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.quarkus.logging.Log; 
+import io.quarkus.logging.Log;
 
 @ApplicationScoped
 @Getter
@@ -34,7 +34,7 @@ public class ExtwIntegConfiguration {
    */
   public Configuration configuration(String operatorCode) {
     System.out.format("configuration was called %s\n", operatorCode);
-//    Log.info("configuration was called (Log.info)");
+    // Log.info("configuration was called (Log.info)");
     if (Objects.isNull(operators) || operators.isEmpty() || !operators.containsKey(operatorCode)) {
       throw new EntityNotExistException(
           "Unable to find operator [%s - %s - %s]",
@@ -42,7 +42,7 @@ public class ExtwIntegConfiguration {
     }
 
     return operators.get(operatorCode);
-  } 
+  }
 
   /**
    * get configuration and cast.
@@ -63,7 +63,7 @@ public class ExtwIntegConfiguration {
     System.out.println("init was called (System.out.println) 3");
     Log.info("init was called (log.info)");
     Log.info("init was called (log.info) 2");
-    Log.info("init was called (log.info) 3") ;
+    Log.info("init was called (log.info) 3");
     Config config = ConfigProvider.getConfig();
     {
       // parse and handle operator

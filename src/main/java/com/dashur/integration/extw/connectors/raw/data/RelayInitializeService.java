@@ -1,18 +1,19 @@
-package com.dashur.integration.extw.rgs.lega;
+package com.dashur.integration.extw.connectors.raw.data;
 
 import com.dashur.integration.commons.Constant;
 import com.dashur.integration.commons.rest.model.RestResponseWrapperModel;
-import com.dashur.integration.extw.rgs.data.RelayGetBalanceModel;
+import com.dashur.integration.extw.connectors.raw.data.service.FreePlaysData;
+
+import java.util.Optional;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-public interface RelayGetBalance {
-
+public interface RelayInitializeService {
     @GET
-    @Path("/relayGetBalance")
+    @Path("relayInitialize/{sessionId}")
     @Produces(MediaType.APPLICATION_JSON)
-    RestResponseWrapperModel<RelayGetBalanceModel> relayGetBalance(
+    RestResponseWrapperModel<RelayInitializeModel> relayInitialize(
             @HeaderParam(Constant.REST_HEADER_AUTHORIZATION) String auth,
             @HeaderParam(Constant.REST_HEADER_X_DAS_TZ) String tz,
             @HeaderParam(Constant.REST_HEADER_X_DAS_CURRENCY) String currency,
@@ -20,5 +21,6 @@ public interface RelayGetBalance {
             @HeaderParam(Constant.REST_HEADER_X_DAS_TX_LANG) String lang,
             @HeaderParam(Constant.REST_HEADER_X_DAS_TENANT_ID) Long tenantId,
             @PathParam("sessionId") Long sessionId,
-            @QueryParam("token") String token);
+            @QueryParam("token") String token,
+            @QueryParam("freePlaysData") Optional<FreePlaysData> freePlaysData);
 }

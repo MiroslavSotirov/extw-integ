@@ -3,7 +3,7 @@ package com.dashur.integration.extw;
 import com.dashur.integration.commons.exception.*;
 import com.dashur.integration.commons.utils.CommonUtils;
 import com.dashur.integration.extw.connectors.ConnectorServiceLocator;
-import com.dashur.integration.extw.connectors.relaxgaming.RelaxGamingConnectorServiceImpl;
+import com.dashur.integration.extw.connectors.raw.RawConnectorServiceImpl;
 import com.dashur.integration.extw.data.*;
 import java.util.Date;
 import java.util.Objects;
@@ -66,7 +66,7 @@ public class ExtwConnectorsController {
     connectorLocator.getConnector(operator).validate(companyId, hmacHash, data);
     DasResponse response;
     DasRequest request = null;
-    RelaxGamingConnectorServiceImpl relax = new RelaxGamingConnectorServiceImpl();
+    RawConnectorServiceImpl relax = new RawConnectorServiceImpl();
     relax.init();
 
     log.trace("input : [{} - {} - {} - {}]", operator, companyId, api, data);
